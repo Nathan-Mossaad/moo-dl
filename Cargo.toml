@@ -1,0 +1,16 @@
+[package]
+name = "moo-dl"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1.38", features = ["macros", "rt-multi-thread"] }
+tokio-stream = "0.1"
+
+reqwest = { version = "0.12", features = ["stream", "json", "cookies"] }
+serde_json = "1.0"
+
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
+indicatif = "0.17"
+tracing-indicatif = "0.3"
