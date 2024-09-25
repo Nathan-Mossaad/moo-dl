@@ -14,3 +14,8 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
 indicatif = "0.17"
 tracing-indicatif = "0.3"
+
+chromiumoxide = { version = "0.7", features = [
+    "tokio-runtime",
+], default-features = false }
+base64 = "0.22"

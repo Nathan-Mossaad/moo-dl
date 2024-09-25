@@ -31,14 +31,9 @@ async fn main() -> crate::Result<()> {
         .init();
     // }
 
-    let credential = Credential::from_username_password(
-        "http://localhost:8000".to_string(),
-        "admin",
-        "admin",
-        None,
-        None,
-    )
-    .await?;
+    let credential =
+        Credential::from_graphical("https://moodle.rwth-aachen.de/".to_string(), None, None)
+            .await?;
     println!("{:?}", credential);
 
     Ok(())
