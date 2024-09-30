@@ -9,6 +9,7 @@ tokio-stream = "0.1"
 
 reqwest = { version = "0.12", features = ["stream", "json", "cookies"] }
 serde_json = "1.0"
+regex = "1.10"
 
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
@@ -19,3 +20,5 @@ chromiumoxide = { version = "0.7", features = [
     "tokio-runtime",
 ], default-features = false }
 base64 = "0.22"
+select = "0.6.0"
+totp-rs = "5.6"
