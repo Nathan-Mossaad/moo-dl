@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 tokio = { version = "1.38", features = ["macros", "rt-multi-thread"] }
 tokio-stream = "0.1"
+futures = "0.3"
 
 # TODO: add compression support gzip, zstd, brotli, deflate
 reqwest = { version = "0.12", features = ["stream", "json", "cookies"] }

@@ -2,6 +2,8 @@ use course_modules::Module;
 use serde::Deserialize;
 use tracing::debug;
 
+use futures::future::join_all;
+
 use crate::Result;
 
 use super::errors::MissingUserIdError;
@@ -119,39 +121,24 @@ impl Api {
         &self,
         courses: Vec<u64>,
     ) -> Result<Vec<CoreCourseGetContents>> {
-        let mut query = vec![(
-            "wsfunction".to_string(),
-            "tool_mobile_call_external_functions".to_string(),
-        )];
-        for (pos, course) in courses.iter().enumerate() {
-            query.extend([
-                (format!("requests[{}][settingraw]", pos), "0".to_string()),
-                (format!("requests[{}][settingfilter]", pos), "1".to_string()),
-                (
-                    format!("requests[{}][settingfileurl]", pos),
-                    "1".to_string(),
-                ),
-                (
-                    format!("requests[{}][function]", pos),
-                    "core_course_get_contents".to_string(),
-                ),
-                (
-                    format!("requests[{}][arguments]", pos),
-                    format!("{{\"courseid\":\"{}\"}}", course),
-                ),
-            ]);
-        }
-        let query: Vec<(&str, &str)> = query
+        // Don't use grouped requests are, as parallel single requests are faster
+        let courses_futures: Vec<_> = courses
             .iter()
-            .map(|(k, v)| (k.as_str(), v.as_str()))
+            .map(|c| self.core_course_get_contents(*c))
             .collect();
-        let responses = self
-            .rest_api_request_json::<ToolMobileCallExternalFunctions>(&query)
-            .await?;
+
+        let responses = join_all(courses_futures).await;
+
         let mut result = vec![];
-        for response in responses.responses {
-            let course_contents = serde_json::from_str::<CoreCourseGetContents>(&response.data)?;
-            result.push(course_contents);
+        for response in responses {
+            match response {
+                Ok(course_contents) => {
+                    result.push(course_contents);
+                }
+                Err(e) => {
+                    return Err(e);
+                }
+            }
         }
         Ok(result)
     }
