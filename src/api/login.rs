@@ -220,8 +220,9 @@ impl Credential {
     /// * `username` - username
     /// * `password` - password
     /// * `totp` - totp
-    /// * `totp_secret` - totp secret=
-    /// * `client` - optional client to use for requests Warning: the client needs to have the cookie store enabled (This operation loads in cookies, that could be usefull for other operations)
+    /// * `totp_secret` - totp secret
+    /// * `wstoken` - web service token (this will skip requesting a new one)
+    /// * `jar` - cookie jar (This will contain all created cookies)
     ///
     /// Based on https://github.com/Romern/syncMyMoodle
     ///
