@@ -18,16 +18,22 @@ use tokio_stream::StreamExt;
 
 use crate::Result;
 
+// TODO remove dead_code warning
+#[allow(dead_code)]
+
 /// Represents moodle credential
 #[derive(Debug, Clone)]
 pub struct Credential {
     /// base moodle instance url (e.g. https://moodle.example.com)
-    instance_url: String,
+    pub instance_url: String,
     /// web service token (as used by the official moodle app)
-    wstoken: String,
+    pub wstoken: String,
     /// cookie (as used on the moodle website)
-    session_cookie: Option<String>,
+    pub session_cookie: Option<String>,
 }
+
+// TODO remove dead_code warning
+#[allow(dead_code)]
 
 impl Credential {
     /// Creates a new credential from a wstoken
