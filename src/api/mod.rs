@@ -14,7 +14,7 @@ pub struct Api {
     /// The credential used for authentication
     pub credential: Credential,
     /// The user id of the current user
-    pub user_id: Option<i32>,
+    pub user_id: Option<u64>,
     /// The client used for requests
     pub client: Client,
 }

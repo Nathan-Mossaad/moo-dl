@@ -45,7 +45,8 @@ async fn main() -> crate::Result<()> {
         user_id: None,
     };
     api.get_user_id().await?;
-    println!("{:?}", api.core_enrol_get_users_courses().await?);
+    println!("{:?}", api);
+    println!("{:?}", api.core_course_get_contents(40121).await?);
 
     Ok(())
 }
