@@ -1,4 +1,5 @@
 use serde::{de, Deserialize};
+use tracing::trace;
 
 use crate::Result;
 
@@ -132,6 +133,7 @@ impl Api {
     where
         T: for<'a> Deserialize<'a>,
     {
+        trace!("Rest api request: {:?}", query);
         let response = self
             .client
             .get(format!(
