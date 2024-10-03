@@ -124,6 +124,10 @@ pub struct CoreWebserviceGetSiteInfoAdvancedFeature {
 }
 
 impl Api {
+    /// Generic function to make a rest api request
+    /// # Arguments
+    /// * `query` - query parameters
+    /// * `T` - type to deserialize to
     pub async fn rest_api_request_json<T>(&self, query: &[(&str, &str)]) -> Result<T>
     where
         T: for<'a> Deserialize<'a>,
