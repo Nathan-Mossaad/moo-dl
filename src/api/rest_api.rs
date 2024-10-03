@@ -124,7 +124,10 @@ pub struct CoreWebserviceGetSiteInfoAdvancedFeature {
 }
 
 impl Api {
-    pub async fn get_core_webservice_get_site_info(&self) -> Result<CoreWebserviceGetSiteInfo> {
+    pub async fn rest_api_request_json<T>(&self, query: &[(&str, &str)]) -> Result<T>
+    where
+        T: for<'a> Deserialize<'a>,
+    {
         let response = self
             .client
             .get(format!(
@@ -134,10 +137,19 @@ impl Api {
             .query(&[
                 ("moodlewsrestformat", "json"),
                 ("wstoken", self.credential.wstoken.as_str()),
-                ("wsfunction", "core_webservice_get_site_info"),
             ])
+            .query(query)
             .send()
             .await?;
-        Ok(response.json::<CoreWebserviceGetSiteInfo>().await?)
+        Ok(response.json::<T>().await?)
+    }
+
+    pub async fn get_core_webservice_get_site_info(&self) -> Result<CoreWebserviceGetSiteInfo> {
+        Ok(self
+            .rest_api_request_json::<CoreWebserviceGetSiteInfo>(&[(
+                "wsfunction",
+                "core_webservice_get_site_info",
+            )])
+            .await?)
     }
 }
