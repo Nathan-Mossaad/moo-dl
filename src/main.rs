@@ -46,7 +46,13 @@ async fn main() -> crate::Result<()> {
     };
     api.get_user_id().await?;
     println!("{:?}", api);
-    println!("{:?}", api.core_course_get_contents(40121).await?);
+    let courses = api
+        .core_enrol_get_users_courses()
+        .await?
+        .iter()
+        .map(|c| c.id)
+        .collect::<Vec<u64>>();
+    println!("{:?}", api.core_course_get_contents_mult(courses).await?);
 
     Ok(())
 }

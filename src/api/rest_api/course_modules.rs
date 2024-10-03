@@ -35,7 +35,8 @@ pub enum Module {
     HsuForum(HsuForum),
     #[serde(rename = "grouptool")]
     Grouptool(Grouptool),
-    Unknown(Unknown),
+    #[serde(other)]
+    Unknown,
 }
 
 // Files
@@ -161,14 +162,4 @@ pub struct HsuForum {
 pub struct Grouptool {
     pub id: u64,
     pub name: String,
-}
-
-// Unknown
-// TODO remove dead_code warning
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
-pub struct Unknown {
-    pub id: u64,
-    pub name: String,
-    pub modname: String,
 }

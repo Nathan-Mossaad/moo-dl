@@ -32,6 +32,19 @@ pub struct CoreEnrolGetUsersCourses {
 // TODO remove dead_code warning
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
+// This allows us to do multiple requests at once
+pub struct ToolMobileCallExternalFunctions {
+    pub responses: Vec<ToolMobileCallExternalFunctionsResponse>,
+}
+// TODO remove dead_code warning
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+pub struct ToolMobileCallExternalFunctionsResponse {
+    pub data: String,
+}
+// TODO remove dead_code warning
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
 pub struct CoreCourseGetContents(Vec<CoreCourseGetContentsElement>);
 // TODO remove dead_code warning
 #[allow(dead_code)]
@@ -93,18 +106,53 @@ impl Api {
     }
 
     pub async fn core_course_get_contents(&self, course_id: u64) -> Result<CoreCourseGetContents> {
-        // let response = self
-        //     .rest_api_request_text(&[
-        //         ("wsfunction", "core_course_get_contents"),
-        //         ("courseid", &course_id.to_string()),
-        //     ])
-        //     .await?;
-        // Ok(serde_json::from_str(&response)?)
         Ok(self
             .rest_api_request_json::<CoreCourseGetContents>(&[
                 ("wsfunction", "core_course_get_contents"),
                 ("courseid", &course_id.to_string()),
             ])
             .await?)
+    }
+
+    /// Same as core_course_get_contents but with multiple courses
+    pub async fn core_course_get_contents_mult(
+        &self,
+        courses: Vec<u64>,
+    ) -> Result<Vec<CoreCourseGetContents>> {
+        let mut query = vec![(
+            "wsfunction".to_string(),
+            "tool_mobile_call_external_functions".to_string(),
+        )];
+        for (pos, course) in courses.iter().enumerate() {
+            query.extend([
+                (format!("requests[{}][settingraw]", pos), "0".to_string()),
+                (format!("requests[{}][settingfilter]", pos), "1".to_string()),
+                (
+                    format!("requests[{}][settingfileurl]", pos),
+                    "1".to_string(),
+                ),
+                (
+                    format!("requests[{}][function]", pos),
+                    "core_course_get_contents".to_string(),
+                ),
+                (
+                    format!("requests[{}][arguments]", pos),
+                    format!("{{\"courseid\":\"{}\"}}", course),
+                ),
+            ]);
+        }
+        let query: Vec<(&str, &str)> = query
+            .iter()
+            .map(|(k, v)| (k.as_str(), v.as_str()))
+            .collect();
+        let responses = self
+            .rest_api_request_json::<ToolMobileCallExternalFunctions>(&query)
+            .await?;
+        let mut result = vec![];
+        for response in responses.responses {
+            let course_contents = serde_json::from_str::<CoreCourseGetContents>(&response.data)?;
+            result.push(course_contents);
+        }
+        Ok(result)
     }
 }
