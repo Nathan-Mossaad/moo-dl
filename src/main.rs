@@ -1,3 +1,7 @@
+use api::Api;
+
+use reqwest::Client;
+
 // Animations and logging
 use tracing_indicatif::IndicatifLayer;
 use tracing_subscriber::layer::SubscriberExt;
@@ -31,10 +35,17 @@ async fn main() -> crate::Result<()> {
         .init();
     // }
 
-    let credential =
-        Credential::from_graphical("https://moodle.rwth-aachen.de/".to_string(), None, None)
-            .await?;
-    println!("{:?}", credential);
+    let credential = Credential {
+
+    };
+    let client = Client::new();
+    let mut api = Api {
+        credential,
+        client,
+        user_id: None,
+    };
+    api.get_user_id().await?;
+    println!("{:?}", api);
 
     Ok(())
 }

@@ -7,7 +7,9 @@ edition = "2021"
 tokio = { version = "1.38", features = ["macros", "rt-multi-thread"] }
 tokio-stream = "0.1"
 
+# TODO: add compression support gzip, zstd, brotli, deflate
 reqwest = { version = "0.12", features = ["stream", "json", "cookies"] }
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 regex = "1.10"
 
