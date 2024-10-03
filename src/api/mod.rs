@@ -1,3 +1,4 @@
+pub mod errors;
 pub mod login;
 mod rest_api;
 
