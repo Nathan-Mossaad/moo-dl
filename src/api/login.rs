@@ -236,9 +236,7 @@ impl Credential {
             }
         }
 
-        // Set session cookie in cookie jar
-        let cookie = HeaderValue::from_str(&format!("MoodleSession={}", session_cookie))?;
-        cookie_jar.set_cookies(&mut [&cookie].into_iter(), &instance_url);
+        add_moodle_session_cookie(&cookie_jar, &session_cookie, &instance_url)?;
 
         Ok(Credential {
             instance_url,
@@ -444,6 +442,17 @@ impl From<Credential> for ApiCredential {
             wstoken: credential.wstoken,
         }
     }
+}
+
+/// Push a moodle session cookie to the cookie jar
+pub fn add_moodle_session_cookie<C: CookieStore + 'static>(
+    cookie_jar: &Arc<C>,
+    session_cookie: &str,
+    instance_url: &Url,
+) -> Result<()> {
+    let cookie = HeaderValue::from_str(&format!("MoodleSession={}", session_cookie))?;
+    cookie_jar.set_cookies(&mut [&cookie].into_iter(), &instance_url);
+    Ok(())
 }
 
 /// Get some sort of auth login token

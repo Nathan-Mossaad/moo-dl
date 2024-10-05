@@ -3,8 +3,6 @@ use tracing_indicatif::IndicatifLayer;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-use reqwest::Client;
-
 mod api;
 use api::login::Credential;
 use api::Api;
@@ -38,17 +36,16 @@ async fn main() -> crate::Result<()> {
     let cookie_jar = std::sync::Arc::new(reqwest::cookie::Jar::default());
     let credential = Credential::from_raw(
 
-        cookie_jar,
-    ).unwrap();
+        cookie_jar.clone(),
+    )
+    .unwrap();  
 
     println!("{:?}", credential);
 
-    let client = Client::new();
-    let mut api = Api {
-        api_credential: credential.into(),
-        client,
-        user_id: None,
-    };
+    let mut api = Api::builder()
+        .credential(credential)
+        .cookie_jar(cookie_jar)
+        .build()?;
     api.get_user_id().await?;
     println!("{:?}", api);
     let courses = api
