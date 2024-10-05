@@ -71,14 +71,14 @@ impl Api {
             .client
             .get(format!(
                 "{}/webservice/rest/server.php",
-                self.credential.instance_url
+                self.api_credential.instance_url
             ))
             .query(&[
                 ("moodlewsrestformat", "json"),
                 ("moodlewssettingraw", "false"),
                 ("moodlewssettingfileurl", "true"),
                 ("moodlewssettingfilter", "true"),
-                ("wstoken", self.credential.wstoken.as_str()),
+                ("wstoken", self.api_credential.wstoken.as_str()),
             ])
             .query(query)
             .send()

@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use tracing::{debug, trace};
 
+use http::HeaderValue;
 use regex::Regex;
 use reqwest::{cookie::CookieStore, Client, Response, Url};
 use serde_json::Value;
@@ -18,39 +19,25 @@ use tokio_stream::StreamExt;
 
 use crate::Result;
 
-// TODO remove dead_code warning
-#[allow(dead_code)]
+/// Represents limited credentials for the web service api only
+#[derive(Debug, Clone)]
+pub struct ApiCredential {
+    pub instance_url: Url,
+    pub wstoken: String,
+}
 
 /// Represents moodle credential
 #[derive(Debug, Clone)]
 pub struct Credential {
     /// base moodle instance url (e.g. https://moodle.example.com)
-    pub instance_url: String,
+    pub instance_url: Url,
     /// web service token (as used by the official moodle app)
     pub wstoken: String,
     /// cookie (as used on the moodle website)
-    pub session_cookie: Option<String>,
+    pub session_cookie: String,
 }
 
-// TODO remove dead_code warning
-#[allow(dead_code)]
-
 impl Credential {
-    /// Creates a new credential from a wstoken
-    ///
-    /// # Arguments
-    ///
-    /// * `instance_url` - base moodle instance url (e.g. https://moodle.example.com)
-    /// * `wstoken` - web service token (as used by the official moodle app)
-    pub fn from_wstoken(instance_url: String, wstoken: String) -> Self {
-        debug!("Creating credential from (wstoken): {{ instance_url: \"{instance_url}\", wstoken: \"{wstoken}\" }}");
-        Credential {
-            instance_url,
-            wstoken,
-            session_cookie: None,
-        }
-    }
-
     /// Creates a new credential from (username/password)
     ///
     /// # Arguments
@@ -59,19 +46,18 @@ impl Credential {
     /// * `username` - username
     /// * `password` - password
     /// * `wstoken` - web service token (as used by the official moodle app)
-    /// * `client` - optional client to use for requests
-    pub async fn from_username_password(
-        instance_url: String,
+    /// * `cookie_jar` - cookie jar where the Moodle session cookie will be stored
+    pub async fn from_username_password<C: CookieStore + 'static>(
+        instance_url: Url,
         username: &str,
         password: &str,
         wstoken: Option<String>,
-        client: Option<&Client>,
+        cookie_jar: Arc<C>,
     ) -> Result<Self> {
         debug!("Creating credential from (username/password): {{ instance_url: \"{instance_url}\", username: \"{username}\", password: \"{password}\" }}");
-        let client: &Client = match client {
-            Some(client) => client,
-            None => &Client::new(),
-        };
+        let client = Client::builder()
+            .cookie_provider(cookie_jar.clone())
+            .build()?;
 
         // Aquire wstoken
         let wstoken = match wstoken {
@@ -79,7 +65,7 @@ impl Credential {
             None => {
                 // Request wstoken
                 let wstoken_req: Value = client
-                    .post(format!("{}/login/token.php", instance_url))
+                    .post(instance_url.join("login/token.php")?)
                     .form(&vec![
                         ("username", username),
                         ("password", password),
@@ -100,25 +86,33 @@ impl Credential {
         };
 
         // Attempt to get session cookie
+        // Get login token
+        let get_login_token_req = client
+            .post(instance_url.join("login/index.php")?)
+            .send()
+            .await?;
+        let login_url = get_login_token_req.url().clone();
+        let login_token = get_token(get_login_token_req, "logintoken").await?;
         let session_cookie_req = client
-            .post(format!("{}/login/index.php", instance_url))
-            .form(&vec![("username", username), ("password", password)])
+            .post(login_url)
+            .form(&vec![
+                ("anchor", ""),
+                ("logintoken", &login_token),
+                ("username", username),
+                ("password", password),
+            ])
             .send()
             .await?;
         trace!(
             "Cookies: {:?}",
             session_cookie_req.cookies().collect::<Vec<_>>()
         );
-        let session_cookie = session_cookie_req
-            .cookies()
-            .find(|cookie| cookie.name() == "MoodleSession")
-            .map(|cookie| cookie.value().to_string());
-        debug!("Response cookie: {:?}", session_cookie);
+        let session_cookie = extract_session_cookie(&instance_url, &cookie_jar)?;
 
         Ok(Credential {
             instance_url,
             wstoken,
-            session_cookie,
+            session_cookie: session_cookie,
         })
     }
 
@@ -128,12 +122,14 @@ impl Credential {
     /// * `instance_url` - base moodle instance url (e.g. https://moodle.example.com)
     /// * `wstoken` - web service token (as used by the official moodle app)
     /// * `browser` - optional browser to use for requests
-    pub async fn from_graphical(
-        instance_url: String,
+    /// * `cookie_jar` - cookie jar where the Moodle session cookie will be stored
+    pub async fn from_graphical<C: CookieStore + 'static>(
+        instance_url: Url,
         wstoken: Option<String>,
         browser: Option<&Browser>,
+        cookie_jar: Arc<C>,
     ) -> Result<Self> {
-        if !(instance_url.starts_with("http://") || instance_url.starts_with("https://")) {
+        if !(instance_url.scheme() == "http" || instance_url.scheme() == "https") {
             return Err(
                 "Incorrect url, it has to start with either \"http://\" or \"https://\"".into(),
             );
@@ -198,10 +194,10 @@ impl Credential {
 
         // Get cookie
         let session_cookie;
-        let base_domain = instance_url.split("/").collect::<Vec<&str>>()[2];
+        let instance_host = instance_url.host_str().ok_or("Invalid instance url")?;
         let cookie = all_cookies
             .iter()
-            .find(|cookie| (cookie.domain == base_domain) && (cookie.name == "MoodleSession"));
+            .find(|cookie| (&cookie.domain == instance_host) && (cookie.name == "MoodleSession"));
         match cookie {
             Some(cookie_candidate) => {
                 debug!("Found cookie: {:?}", cookie_candidate);
@@ -212,10 +208,14 @@ impl Credential {
             }
         }
 
+        // Set session cookie in cookie jar
+        let cookie = HeaderValue::from_str(&format!("MoodleSession={}", session_cookie))?;
+        cookie_jar.set_cookies(&mut [&cookie].into_iter(), &instance_url);
+
         Ok(Credential {
             instance_url,
             wstoken,
-            session_cookie: Some(session_cookie),
+            session_cookie,
         })
     }
 
@@ -228,7 +228,7 @@ impl Credential {
     /// * `totp` - totp
     /// * `totp_secret` - totp secret
     /// * `wstoken` - web service token (this will skip requesting a new one)
-    /// * `jar` - cookie jar (This will contain all created cookies)
+    /// * `cookie_jar` - cookie jar (This will contain all created cookies)
     ///
     /// Based on https://github.com/Romern/syncMyMoodle
     ///
@@ -257,6 +257,7 @@ impl Credential {
         wstoken: Option<String>,
         cookie_jar: Arc<C>,
     ) -> Result<Self> {
+        let instance_url: Url = "https://moodle.rwth-aachen.de/".to_string().parse()?;
         let totp_secret: String = totp_secret.into();
         debug!(
             "Logging in via RWTH sso using username: \"{}\", password: \"{}\", totp: \"{}\", totp_secret: \"{}\"",
@@ -267,14 +268,14 @@ impl Credential {
             .build()?;
 
         // Intialize login process
-        client.get("https://moodle.rwth-aachen.de/").send().await?;
+        client.get(instance_url.as_ref()).send().await?;
         let response = client
-            .get("https://moodle.rwth-aachen.de/auth/shibboleth/index.php")
+            .get(instance_url.join("auth/shibboleth/index.php")?)
             .send()
             .await?;
         let resp_url = response.url().clone();
         debug!("Response URL: {:?}", resp_url);
-        let csrf_token = get_csrf_token(response).await?;
+        let csrf_token = get_token(response, "csrf_token").await?;
         debug!("CSRF token: {}", csrf_token);
 
         // Login via SSO
@@ -291,7 +292,7 @@ impl Credential {
             .await?;
         let resp_url = response.url().clone();
         debug!("Response URL: {:?}", resp_url);
-        let csrf_token = get_csrf_token(response).await?;
+        let csrf_token = get_token(response, "csrf_token").await?;
         debug!("CSRF token: {}", csrf_token);
         debug!("Completed login step 1");
 
@@ -307,7 +308,7 @@ impl Credential {
             .await?;
         let resp_url = response.url().clone();
         debug!("Response URL: {:?}", resp_url);
-        let csrf_token = get_csrf_token(response).await?;
+        let csrf_token = get_token(response, "csrf_token").await?;
         debug!("CSRF token: {}", csrf_token);
         debug!("Completed login step 2");
 
@@ -362,7 +363,7 @@ impl Credential {
         trace!("RelayState: {:?}", relay_state);
         trace!("SAMLResponse: {:?}", saml_response);
         let response = client
-            .post("https://moodle.rwth-aachen.de/Shibboleth.sso/SAML2/POST")
+            .post(instance_url.join("Shibboleth.sso/SAML2/POST")?)
             .form(&vec![
                 ("RelayState", relay_state),
                 ("SAMLResponse", saml_response),
@@ -373,29 +374,7 @@ impl Credential {
         trace!("Response HTML:\n {}", html);
         debug!("Completed final login step (4)");
 
-        // Print all cookies
-        let url = Url::parse("https://moodle.rwth-aachen.de/").unwrap();
-        let cookies = cookie_jar.cookies(&url);
-        trace!("Cookies: {:?}", cookies);
-
-        let session_cookie;
-        if let Some(header_value) = cookie_jar.cookies(&url) {
-            let header_value = header_value.to_str()?;
-            let regex = Regex::new(r"MoodleSession=([^ ;]+)")?;
-            let regex_capture = match regex.captures(header_value) {
-                Some(captures) => captures[0].to_string(),
-                None => return Err("RWTH Login: No Session Cookie found".into()),
-            };
-            let mut parts = regex_capture.split('=');
-            let _ = parts.next();
-            session_cookie = match parts.next() {
-                Some(cookie) => cookie.to_string(),
-                None => return Err("RWTH Login: No Session Cookie found".into()),
-            };
-        } else {
-            return Err("RWTH Login: No Session Cookie found".into());
-        }
-        debug!("Found Session Cookie {:?}", session_cookie);
+        let session_cookie = extract_session_cookie(&instance_url, &cookie_jar)?;
 
         // Check if wstoken we need to get a new wstoken
         let wstoken = match wstoken {
@@ -403,7 +382,7 @@ impl Credential {
             None => {
                 // Acuire wstoken
                 let response_url = match client
-                    .get("https://moodle.rwth-aachen.de/admin/tool/mobile/launch.php?service=moodle_mobile_app&passport=00000&urlscheme=moo-dl")
+                    .get(instance_url.join("admin/tool/mobile/launch.php?service=moodle_mobile_app&passport=00000&urlscheme=moo-dl")?)
                     .send()
                     .await {
                         Ok(_) => return Err("This should have resulted in an invalid url".into()),
@@ -423,11 +402,69 @@ impl Credential {
         };
 
         Ok(Credential {
-            instance_url: "https://moodle.rwth-aachen.de".to_string(),
+            instance_url,
             wstoken,
-            session_cookie: Some(session_cookie),
+            session_cookie,
         })
     }
+}
+
+impl From<Credential> for ApiCredential {
+    fn from(credential: Credential) -> Self {
+        ApiCredential {
+            instance_url: credential.instance_url,
+            wstoken: credential.wstoken,
+        }
+    }
+}
+
+/// Get some sort of auth login token
+async fn get_token(response: Response, token_name: &str) -> Result<String> {
+    let html = response.text().await?;
+    trace!("Parsing HTML, for token {}:\n {}", token_name, html);
+
+    let document = Document::from(html.as_str());
+    let response_token = document
+        .find(Name("input"))
+        .filter(|node| node.attr("name") == Some(token_name))
+        .next()
+        .and_then(|node| node.attr("value"));
+    let response_token = match response_token {
+        Some(response_token) => response_token,
+        None => {
+            return Err(format!("Error on login: Couldn't extract token: {}", token_name).into());
+        }
+    };
+
+    Ok(response_token.to_string())
+}
+
+fn extract_session_cookie<C: CookieStore + 'static>(
+    instance_url: &Url,
+    cookie_jar: &Arc<C>,
+) -> Result<String> {
+    let cookies = cookie_jar.cookies(instance_url);
+    trace!("Cookies from instance_url: {:?}", cookies);
+
+    let session_cookie;
+    if let Some(header_value) = cookies {
+        let header_value = header_value.to_str()?;
+        let regex = Regex::new(r"MoodleSession=([^ ;]+)")?;
+        let regex_capture = match regex.captures(header_value) {
+            Some(captures) => captures[0].to_string(),
+            None => return Err("Cookie".into()),
+        };
+        let mut parts = regex_capture.split('=');
+        let _ = parts.next();
+        session_cookie = match parts.next() {
+            Some(cookie) => cookie.to_string(),
+            None => return Err("Cookie extractor: could not extract cookie".into()),
+        };
+    } else {
+        return Err("Cookie extractor: could not extract cookie".into());
+    }
+    debug!("Found Session Cookie {}", session_cookie);
+    Ok(session_cookie)
 }
 
 fn wstoken_from_url(moo_dl_url: &str) -> Result<String> {
@@ -442,24 +479,4 @@ fn wstoken_from_url(moo_dl_url: &str) -> Result<String> {
         token_base64,
     )?)?;
     Ok(token_decoded.split(":::").collect::<Vec<&str>>()[1].to_string())
-}
-
-/// RWTH specific function to get the csrf token
-async fn get_csrf_token(response: Response) -> Result<String> {
-    let html = response.text().await?;
-    trace!("Parsing HTML:\n {}", html);
-
-    let document = Document::from(html.as_str());
-    let csrf_token = document
-        .find(Name("input"))
-        .filter(|node| node.attr("name") == Some("csrf_token"))
-        .next()
-        .and_then(|node| node.attr("value"));
-    let csrf_token = match csrf_token {
-        Some(csrf_token) => csrf_token,
-        None => {
-            return Err("Error on login: Couldn't extract csrf token".into());
-        }
-    };
-    Ok(csrf_token.to_string())
 }

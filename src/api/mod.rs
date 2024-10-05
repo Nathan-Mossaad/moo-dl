@@ -4,7 +4,7 @@ mod rest_api;
 
 use reqwest::Client;
 
-use login::Credential;
+use login::ApiCredential;
 
 use crate::Result;
 
@@ -12,7 +12,7 @@ use crate::Result;
 /// The main api struct
 pub struct Api {
     /// The credential used for authentication
-    pub credential: Credential,
+    pub api_credential: ApiCredential,
     /// The user id of the current user
     pub user_id: Option<u64>,
     /// The client used for requests

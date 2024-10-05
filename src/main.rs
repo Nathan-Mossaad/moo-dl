@@ -1,14 +1,13 @@
-use api::Api;
-
-use reqwest::Client;
-
 // Animations and logging
 use tracing_indicatif::IndicatifLayer;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
+use reqwest::Client;
+
 mod api;
 use api::login::Credential;
+use api::Api;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -35,12 +34,19 @@ async fn main() -> crate::Result<()> {
         .init();
     // }
 
-    let credential = Credential {
+    let cookie_jar = std::sync::Arc::new(reqwest::cookie::Jar::default());
+    let credential = Credential::from_username_password(
 
-    };
+        None,
+        cookie_jar,
+    )
+    .await?;
+
+    println!("{:?}", credential);
+
     let client = Client::new();
     let mut api = Api {
-        credential,
+        api_credential: credential.into(),
         client,
         user_id: None,
     };
