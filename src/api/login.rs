@@ -22,7 +22,9 @@ use crate::Result;
 /// Represents limited credentials for the web service api only
 #[derive(Debug, Clone)]
 pub struct ApiCredential {
+    /// base moodle instance url (e.g. https://moodle.example.com)
     pub instance_url: Url,
+    /// web service token (as used by the official moodle app)
     pub wstoken: String,
 }
 
@@ -38,6 +40,32 @@ pub struct Credential {
 }
 
 impl Credential {
+    /// Creates a new credential from raw values
+    /// This is mainly inted for testing purposes
+    ///
+    /// # Arguments
+    ///
+    /// * `instance_url` - base moodle instance url (e.g. https://moodle.example.com)
+    /// * `wstoken` - web service token (as used by the official moodle app)
+    /// * `session_cookie` - cookie (as used on the moodle website)
+    /// * `cookie_jar` - cookie jar where the Moodle session cookie will be stored
+    pub fn from_raw<C: CookieStore + 'static>(
+        instance_url: Url,
+        wstoken: String,
+        session_cookie: String,
+        cookie_jar: Arc<C>,
+    ) -> Result<Credential> {
+        // Set session cookie in cookie jar
+        let cookie = HeaderValue::from_str(&format!("MoodleSession={}", session_cookie))?;
+        cookie_jar.set_cookies(&mut [&cookie].into_iter(), &instance_url);
+
+        Ok(Self {
+            instance_url,
+            wstoken,
+            session_cookie,
+        })
+    }
+
     /// Creates a new credential from (username/password)
     ///
     /// # Arguments

@@ -34,13 +34,12 @@ async fn main() -> crate::Result<()> {
         .init();
     // }
 
+    // TODO remove test credentials
     let cookie_jar = std::sync::Arc::new(reqwest::cookie::Jar::default());
-    let credential = Credential::from_username_password(
+    let credential = Credential::from_raw(
 
-        None,
         cookie_jar,
-    )
-    .await?;
+    ).unwrap();
 
     println!("{:?}", credential);
 
