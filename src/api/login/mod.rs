@@ -19,6 +19,8 @@ use tokio_stream::StreamExt;
 
 use crate::Result;
 
+pub mod from_params;
+
 /// Represents limited credentials for the web service api only
 #[derive(Debug, Clone)]
 pub struct ApiCredential {

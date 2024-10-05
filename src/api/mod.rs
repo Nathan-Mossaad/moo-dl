@@ -1,22 +1,30 @@
+use tracing::trace;
+
+use std::{ops::Deref, sync::Arc};
+use tokio::sync::{Mutex, RwLock};
+
+use reqwest::{cookie::Jar, Client};
+
 pub mod errors;
 pub mod login;
 mod rest_api;
 
-use std::sync::{Arc, RwLock};
-
-use reqwest::{cookie::Jar, Client};
-
-use login::{ApiCredential, Credential};
-
 use crate::Result;
+use errors::LoginFailedError;
 
+use login::{
+    from_params::{LoginFromParams, LoginParams},
+    ApiCredential, Credential,
+};
 #[derive(Debug, Clone)]
 /// The main api struct
 pub struct Api {
     /// The credential used for api authentication
     pub api_credential: ApiCredential,
     /// The credential used for authentication
-    pub credential: Arc<RwLock<Option<Credential>>>,
+    credential: Arc<RwLock<Option<Credential>>>,
+    /// The login params used to create a credential if needed
+    pub login_params: Arc<Mutex<LoginParams>>,
     /// The cookie jar that may contain the session cookie
     pub cookie_jar: Arc<Jar>,
     /// The client used for requests
@@ -31,8 +39,74 @@ impl Api {
         ApiBuilder::new()
     }
 
+    async fn get_credential(&self) -> Option<tokio::sync::RwLockReadGuard<'_, Option<Credential>>> {
+        let credential_guard = self.credential.read().await;
+        if credential_guard.as_ref().is_some() {
+            Some(credential_guard)
+        } else {
+            None
+        }
+    }
+
+    /// Acuire a credential
+    /// If a credential already exists, it will be returned
+    /// If no credential exists, it will be created
+    ///
+    /// If the login fails, it will return an error for all calls
+    pub async fn acuire_credential(
+        &self,
+    ) -> Result<tokio::sync::RwLockReadGuard<'_, Option<Credential>>> {
+        {
+            // Check if credential exists
+            let credential_guard = self.get_credential().await;
+            if credential_guard.is_some() {
+                return Ok(credential_guard.unwrap());
+            }
+            // credential_guard goes out of scope
+        }
+
+        trace!("No existing credential found, trying to acuire one");
+        // Acquire lock on login params
+        let login_params_guard = self.login_params.lock().await;
+        match login_params_guard.deref() {
+            LoginParams::LoginFailed => {
+                return Err(Box::new(LoginFailedError::new(
+                    "Login already failed in other thread",
+                )));
+            }
+            LoginParams::None => {
+                return Err(Box::new(LoginFailedError::new("No login params set")));
+            }
+            LoginParams::LoginComplete => {
+                let credential_guard = self.get_credential().await;
+                match credential_guard {
+                    Some(credential) => return Ok(credential),
+                    None => return Err(Box::new(LoginFailedError::new(
+                        "Catastrophic error, could not get existing credential: Pls report this",
+                    ))),
+                }
+            }
+            _ => {}
+        }
+        let login_params = login_params_guard
+            .deref()
+            .clone()
+            .login(&self.api_credential, self.cookie_jar.clone())
+            .await;
+        match login_params {
+            Ok(credential) => {
+                self.credential.write().await.replace(credential);
+                Ok(self.credential.read().await)
+            }
+            Err(e) => {
+                *self.login_params.lock().await = LoginParams::LoginFailed;
+                Err(e)
+            }
+        }
+    }
+
     /// Get the user id of the current user
-    pub async fn get_user_id(&mut self) -> Result<()> {
+    pub async fn acuire_user_id(&mut self) -> Result<()> {
         let site_info = self.get_core_webservice_get_site_info().await?;
         self.user_id = Some(site_info.userid);
         Ok(())
@@ -46,6 +120,7 @@ impl Api {
 pub struct ApiBuilder {
     api_credential: Option<ApiCredential>,
     credential: Option<Credential>,
+    login_params: Option<LoginParams>,
     cookie_jar: Option<Arc<Jar>>,
     user_id: Option<u64>,
 }
@@ -55,6 +130,7 @@ impl ApiBuilder {
         ApiBuilder {
             api_credential: None,
             credential: None,
+            login_params: None,
             cookie_jar: None,
             user_id: None,
         }
@@ -67,6 +143,11 @@ impl ApiBuilder {
 
     pub fn credential(mut self, credential: Credential) -> Self {
         self.credential = Some(credential);
+        self
+    }
+
+    pub fn login_params(mut self, login_params: LoginParams) -> Self {
+        self.login_params = Some(login_params);
         self
     }
 
@@ -88,6 +169,10 @@ impl ApiBuilder {
                 .api_credential
                 .ok_or("No api credential or credential provided")?,
         };
+        let login_params = match self.login_params {
+            Some(login_params) => Arc::new(Mutex::new(login_params)),
+            None => Arc::new(Mutex::new(LoginParams::None)),
+        };
         let cookie_jar = match self.cookie_jar {
             Some(cookie_jar) => cookie_jar,
             None => {
@@ -108,6 +193,7 @@ impl ApiBuilder {
         Ok(Api {
             api_credential,
             credential: Arc::new(RwLock::new(credential)),
+            login_params: login_params.clone(),
             cookie_jar,
             client,
             user_id: self.user_id,

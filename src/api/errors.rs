@@ -11,3 +11,24 @@ impl fmt::Display for MissingUserIdError {
         write!(f, "Missing user ID")
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct LoginFailedError {
+    message: String,
+}
+
+impl LoginFailedError {
+    pub fn new(message: impl Into<String>) -> Self {
+        LoginFailedError {
+            message: message.into(),
+        }
+    }
+}
+
+impl StdError for LoginFailedError {}
+
+impl fmt::Display for LoginFailedError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Login failed with reason: {}", self.message)
+    }
+}

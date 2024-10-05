@@ -4,7 +4,10 @@ use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
 mod api;
-use api::login::Credential;
+use api::login::{
+    from_params::{CredentialFromRawParams, LoginParams},
+    ApiCredential,
+};
 use api::Api;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -34,27 +37,31 @@ async fn main() -> crate::Result<()> {
 
     // TODO remove test credentials
     let cookie_jar = std::sync::Arc::new(reqwest::cookie::Jar::default());
-    let credential = Credential::from_raw(
+    let api_credential = ApiCredential {
+    };
+    let login_params = LoginParams::Raw(CredentialFromRawParams {
+    });
 
-        cookie_jar.clone(),
-    )
-    .unwrap();  
+    println!("{:?}", api_credential);
+    println!("{:?}", login_params);
 
-    println!("{:?}", credential);
-
-    let mut api = Api::builder()
-        .credential(credential)
+    let api = Api::builder()
+        .api_credential(api_credential)
+        .login_params(login_params)
         .cookie_jar(cookie_jar)
         .build()?;
-    api.get_user_id().await?;
-    println!("{:?}", api);
-    let courses = api
-        .core_enrol_get_users_courses()
-        .await?
-        .iter()
-        .map(|c| c.id)
-        .collect::<Vec<u64>>();
-    println!("{:?}", api.core_course_get_contents_mult(courses).await?);
+
+    let mult_reader = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        .into_iter()
+        .map(|_| async {
+            let credential = api.acuire_credential().await;
+            println!("Within thread {:?}", credential);
+        });
+    futures::future::join_all(mult_reader).await;
+
+    let credential = api.acuire_credential().await?;
+    println!("{:?}", credential);
+
 
     Ok(())
 }
