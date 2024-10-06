@@ -1,7 +1,10 @@
 use tracing::info;
 
 use chrono::prelude::{DateTime, Local};
-use std::{path::Path, time::UNIX_EPOCH};
+use std::{
+    path::{self, Path},
+    time::UNIX_EPOCH,
+};
 use tokio::{
     fs::{self, File},
     io::AsyncWriteExt,
@@ -97,8 +100,7 @@ impl FileUpdateStrategy {
                 Ok(true)
             }
             FileUpdateStrategy::Overwrite => {
-                // Remove file
-                fs::remove_file(path).await?;
+                // Will be overwritten by download
                 Ok(true)
             }
             _ => {
@@ -106,6 +108,20 @@ impl FileUpdateStrategy {
                 Ok(false)
             }
         }
+    }
+
+    /// Downloads a file from the specified URL asynchronously.
+    ///
+    /// RequestBuilder should be created from a Client::get(url) call.
+    pub async fn download_from_requestbuilder(
+        &self,
+        request: RequestBuilder,
+        path: &Path,
+    ) -> Result<()> {
+        if self.archive_file(path, None).await? {
+            download_file_using_tmp(request, path).await?;
+        }
+        Ok(())
     }
 }
 
