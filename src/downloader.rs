@@ -2,7 +2,13 @@ use tracing::info;
 
 use chrono::prelude::{DateTime, Local};
 use std::{path::Path, time::UNIX_EPOCH};
-use tokio::fs;
+use tokio::{
+    fs::{self, File},
+    io::AsyncWriteExt,
+};
+use tokio_stream::StreamExt;
+
+use reqwest::RequestBuilder;
 
 use crate::Result;
 
@@ -154,11 +160,57 @@ async fn version_file(path: &Path) -> Result<()> {
             new_path_string.push_str(".");
             new_path_string.push_str(str.to_str().unwrap_or(""));
         }
-        _ => {
-            new_path_string.push_str("");
-        }
+        _ => {}
     };
 
     fs::rename(path, new_path_string).await?;
+    Ok(())
+}
+
+/// Ensures that the directory specified by the given `Path` exists.
+async fn ensure_path_exists(path: &Path) -> Result<()> {
+    if let Some(parent_dir) = path.parent() {
+        fs::create_dir_all(parent_dir).await?;
+    }
+    Ok(())
+}
+
+/// Downloads a file from the specified URL asynchronously.
+/// RequestBuilder should be created from a Client::get(url) call.
+async fn chunked_download(request: RequestBuilder, path: &Path) -> Result<()> {
+    // Make sure path exists
+    ensure_path_exists(path).await?;
+
+    let mut file = File::create(path).await?;
+
+    let mut stream = request.send().await?.bytes_stream();
+
+    while let Some(chunk_result) = stream.next().await {
+        let chunk = chunk_result?;
+        file.write_all(&chunk).await?;
+    }
+
+    file.flush().await?;
+    Ok(())
+}
+
+/// Same as chunked_download but writes to a temporary file first, to avoid partially downloaded files
+/// Also results in the old file existing until the new one is fully downloaded
+///
+/// RequestBuilder should be created from a Client::get(url) call.
+pub async fn download_file_using_tmp(request: RequestBuilder, path: &Path) -> Result<()> {
+    // New path for temporary file
+    let tmp_path = path.with_extension("tmp_bZpbocXJQkxt_moo-dl");
+
+    // Make sure file doesn't exist
+    let _ = fs::remove_file(&tmp_path).await;
+    // Download file
+    chunked_download(request, &tmp_path).await?;
+
+    // Make sure file doesn't exist
+    let _ = fs::remove_file(&path).await;
+    // Move file to destination
+    fs::rename(tmp_path, path).await?;
+
     Ok(())
 }
