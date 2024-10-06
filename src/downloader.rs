@@ -2,8 +2,9 @@ use tracing::info;
 
 use chrono::prelude::{DateTime, Local};
 use std::{
-    path::{self, Path},
-    time::UNIX_EPOCH,
+    fs::FileTimes,
+    path::Path,
+    time::{Duration, UNIX_EPOCH},
 };
 use tokio::{
     fs::{self, File},
@@ -117,9 +118,10 @@ impl FileUpdateStrategy {
         &self,
         request: RequestBuilder,
         path: &Path,
+        last_modified: Option<u64>,
     ) -> Result<()> {
-        if self.archive_file(path, None).await? {
-            download_file_using_tmp(request, path).await?;
+        if self.archive_file(path, last_modified).await? {
+            download_file_using_tmp(request, path, last_modified).await?;
         }
         Ok(())
     }
@@ -183,6 +185,27 @@ async fn version_file(path: &Path) -> Result<()> {
     Ok(())
 }
 
+/// Sets the modified and accessed times of a file to a specified unix timestamp.
+pub async fn write_modified_time(path: &Path, last_modified: u64) -> Result<()> {
+    let dest = File::options()
+        .write(true)
+        .open(path)
+        .await?
+        .into_std()
+        .await;
+    write_modified_time_from_file(dest, last_modified).await?;
+    Ok(())
+}
+pub async fn write_modified_time_from_file(dest: std::fs::File, last_modified: u64) -> Result<()> {
+    let new_age = UNIX_EPOCH + Duration::from_secs(last_modified);
+    let times = FileTimes::new().set_accessed(new_age).set_modified(new_age);
+    tokio::task::spawn_blocking(move || {
+        let _ = dest.set_times(times);
+    })
+    .await?;
+    Ok(())
+}
+
 /// Ensures that the directory specified by the given `Path` exists.
 async fn ensure_path_exists(path: &Path) -> Result<()> {
     if let Some(parent_dir) = path.parent() {
@@ -193,7 +216,11 @@ async fn ensure_path_exists(path: &Path) -> Result<()> {
 
 /// Downloads a file from the specified URL asynchronously.
 /// RequestBuilder should be created from a Client::get(url) call.
-async fn chunked_download(request: RequestBuilder, path: &Path) -> Result<()> {
+async fn chunked_download(
+    request: RequestBuilder,
+    path: &Path,
+    last_modified: Option<u64>,
+) -> Result<()> {
     // Make sure path exists
     ensure_path_exists(path).await?;
 
@@ -207,6 +234,12 @@ async fn chunked_download(request: RequestBuilder, path: &Path) -> Result<()> {
     }
 
     file.flush().await?;
+
+    // Write modified time
+    if let Some(last_modified) = last_modified {
+        write_modified_time_from_file(file.into_std().await, last_modified).await?;
+    }
+
     Ok(())
 }
 
@@ -214,14 +247,18 @@ async fn chunked_download(request: RequestBuilder, path: &Path) -> Result<()> {
 /// Also results in the old file existing until the new one is fully downloaded
 ///
 /// RequestBuilder should be created from a Client::get(url) call.
-pub async fn download_file_using_tmp(request: RequestBuilder, path: &Path) -> Result<()> {
+pub async fn download_file_using_tmp(
+    request: RequestBuilder,
+    path: &Path,
+    last_modified: Option<u64>,
+) -> Result<()> {
     // New path for temporary file
     let tmp_path = path.with_extension("tmp_bZpbocXJQkxt_moo-dl");
 
     // Make sure file doesn't exist
     let _ = fs::remove_file(&tmp_path).await;
     // Download file
-    chunked_download(request, &tmp_path).await?;
+    chunked_download(request, &tmp_path, last_modified).await?;
 
     // Make sure file doesn't exist
     let _ = fs::remove_file(&path).await;
