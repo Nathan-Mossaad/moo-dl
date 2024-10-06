@@ -4,6 +4,8 @@ use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
 mod api;
+mod downloader;
+
 use api::login::{
     from_params::{CredentialFromRawParams, LoginParams},
     ApiCredential,
