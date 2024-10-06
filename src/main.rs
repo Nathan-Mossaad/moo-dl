@@ -62,6 +62,5 @@ async fn main() -> crate::Result<()> {
     let credential = api.acuire_credential().await?;
     println!("{:?}", credential);
 
-
     Ok(())
 }

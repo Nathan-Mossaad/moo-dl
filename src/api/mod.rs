@@ -1,4 +1,4 @@
-use tracing::trace;
+use tracing::{debug, info, trace};
 
 use std::{ops::Deref, sync::Arc};
 use tokio::sync::{Mutex, RwLock};
@@ -67,7 +67,7 @@ impl Api {
 
         trace!("No existing credential found, trying to acuire one");
         // Acquire lock on login params
-        let login_params_guard = self.login_params.lock().await;
+        let mut login_params_guard = self.login_params.lock().await;
         match login_params_guard.deref() {
             LoginParams::LoginFailed => {
                 return Err(Box::new(LoginFailedError::new(
@@ -88,15 +88,19 @@ impl Api {
             }
             _ => {}
         }
-        let login_params = login_params_guard
+        info!("Logging in");
+        debug!("Login params: {:?}", login_params_guard);
+        let credential = login_params_guard
             .deref()
             .clone()
             .login(&self.api_credential, self.cookie_jar.clone())
             .await;
-        match login_params {
+        info!("Logged in!");
+        match credential {
             Ok(credential) => {
                 self.credential.write().await.replace(credential);
-                Ok(self.credential.read().await)
+                *login_params_guard = LoginParams::LoginComplete;
+                 Ok(self.credential.read().await)
             }
             Err(e) => {
                 *self.login_params.lock().await = LoginParams::LoginFailed;
