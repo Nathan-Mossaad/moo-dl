@@ -59,9 +59,9 @@ impl Download for Module {
     async fn download(&self, api: &Api, path: &Path) -> Result<()> {
         match self {
             Module::Resource(resource) => resource.download(api, path).await,
+            Module::Assign(assign) => assign.download(api, path).await,
             Module::Folder(folder) => folder.download(api, path).await,
             Module::Url(url) => url.download(api, path).await,
-            Module::Assign(assign) => assign.download(api, path).await,
             _ => {
                 // TODO add missing module downloaders
                 Ok(())
@@ -77,14 +77,18 @@ impl Download for Module {
 pub struct Resource {
     pub id: u64,
     pub name: String,
-    pub contents: Vec<Content>,
+    pub contents: Option<Vec<Content>>,
 }
 impl Download for Resource {
     async fn download(&self, api: &Api, path: &Path) -> Result<()> {
+        let contents = match &self.contents {
+            Some(contents) => contents,
+            None => return Ok(()),
+        };
+
         let download_path = path.join(&self.name);
 
-        let file_futures = self
-            .contents
+        let file_futures = contents
             .iter()
             .map(|content| content.download(api, &download_path));
 
@@ -103,14 +107,18 @@ impl Download for Resource {
 pub struct Folder {
     pub id: u64,
     pub name: String,
-    pub contents: Vec<Content>,
+    pub contents: Option<Vec<Content>>,
 }
 impl Download for Folder {
     async fn download(&self, api: &Api, path: &Path) -> Result<()> {
+        let contents = match &self.contents {
+            Some(contents) => contents,
+            None => return Ok(()),
+        };
+
         let download_path = path.join(&self.name);
 
-        let file_futures = self
-            .contents
+        let file_futures = contents
             .iter()
             .map(|content| content.download(api, &download_path));
 
