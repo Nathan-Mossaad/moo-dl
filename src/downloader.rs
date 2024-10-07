@@ -152,6 +152,30 @@ impl FileUpdateStrategy {
         }
         Ok(())
     }
+
+    /// Saves text/content to a file
+    ///
+    /// Behaves like download_from_requestbuilder
+    pub async fn save_text(&self, content: &str, path: &Path) -> Result<()> {
+        match compare_to_file_contents(content, path).await {
+            Ok(false) => return Ok(()),
+            _ => {
+                // File doesn't exist or is different
+                info!("Writing/Updating file {}", path.display());
+
+                // Attempt archiving file
+                if let FileUpdateStrategy::Archive = self {
+                    // We can Ignore errors, as the file might not exist
+                    let _ = version_file(path).await;
+                }
+
+                // Save file
+                save_to_file(content, path).await?;
+
+                Ok(())
+            }
+        }
+    }
 }
 
 impl SiteStore {

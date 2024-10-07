@@ -62,6 +62,7 @@ impl Download for Module {
             Module::Folder(folder) => folder.download(api, path).await,
             Module::Pdfannotator(pdfannotator) => pdfannotator.download(api, path).await,
             Module::Assign(assign) => assign.download(api, path).await,
+            Module::Label(label) => label.download(api, path).await,
             Module::Url(url) => url.download(api, path).await,
             _ => {
                 // TODO add missing module downloaders
@@ -210,6 +211,15 @@ pub struct Label {
     pub id: u64,
     pub name: String,
     pub description: String,
+}
+impl Download for Label {
+    async fn download(&self, api: &Api, path: &Path) -> Result<()> {
+        let path = path.join(format!("{}.html", self.name));
+
+        api.save_text(&self.description, &path).await?;
+
+        Ok(())
+    }
 }
 
 // TODO remove dead_code warning

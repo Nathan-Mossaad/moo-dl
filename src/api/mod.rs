@@ -294,7 +294,8 @@ impl Api {
         last_modified: Option<u64>,
     ) -> Result<()> {
         // Archive if needed
-        if self.download_options
+        if self
+            .download_options
             .file_update_strategy
             .archive_file(file_path, last_modified)
             .await?
@@ -303,10 +304,23 @@ impl Api {
             let browser = browser_guard.as_ref().unwrap();
 
             info!("Saving/Updating file {}", file_path.display());
-            self.download_options.site_store.save_page(browser, url, file_path).await?;
+            self.download_options
+                .site_store
+                .save_page(browser, url, file_path)
+                .await?;
         }
 
         Ok(())
+    }
+
+    /// Saves text/content to a file
+    ///
+    /// Behaves like save_page
+    pub async fn save_text(&self, content: &str, file_path: &Path) -> Result<()> {
+        self.download_options
+            .file_update_strategy
+            .save_text(content, file_path)
+            .await
     }
 }
 
