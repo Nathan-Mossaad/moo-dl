@@ -47,6 +47,8 @@ pub enum SiteStore {
     MonoPDF,
     /// Create a standard PDF file
     StandardPDF,
+    /// Disable downloading websites
+    None,
 }
 
 impl Default for DownloadOptions {

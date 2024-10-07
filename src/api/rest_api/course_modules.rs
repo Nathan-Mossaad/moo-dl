@@ -57,6 +57,7 @@ pub enum Module {
 impl Download for Module {
     async fn download(&self, api: &Api, path: &Path) -> Result<()> {
         match self {
+            Module::Resource(resource) => resource.download(api, path).await,
             Module::Folder(folder) => folder.download(api, path).await,
             _ => {
                 // TODO add missing module downloaders
@@ -73,8 +74,26 @@ impl Download for Module {
 pub struct Resource {
     pub id: u64,
     pub name: String,
+    pub contents: Vec<Content>,
 }
+impl Download for Resource {
+    async fn download(&self, api: &Api, path: &Path) -> Result<()> {
+        let download_path = path.join(&self.name);
 
+        let file_futures = self
+            .contents
+            .iter()
+            .map(|content| content.download(api, &download_path));
+
+        let downloads = join_all(file_futures).await;
+        // Return error if any download fails
+        for download in downloads {
+            download?;
+        }
+
+        Ok(())
+    }
+}
 // TODO remove dead_code warning
 #[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
