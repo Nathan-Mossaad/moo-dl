@@ -9,7 +9,7 @@ pub mod errors;
 pub mod login;
 mod rest_api;
 
-use crate::Result;
+use crate::{downloader::DownloadOptions, Result};
 use errors::LoginFailedError;
 
 use login::{
@@ -29,6 +29,8 @@ pub struct Api {
     pub cookie_jar: Arc<Jar>,
     /// The client used for requests
     pub client: Client,
+    /// Download options
+    pub download_options: DownloadOptions,
     /// The user id of the current user
     pub user_id: Option<u64>,
 }
@@ -100,7 +102,7 @@ impl Api {
             Ok(credential) => {
                 self.credential.write().await.replace(credential);
                 *login_params_guard = LoginParams::LoginComplete;
-                 Ok(self.credential.read().await)
+                Ok(self.credential.read().await)
             }
             Err(e) => {
                 *self.login_params.lock().await = LoginParams::LoginFailed;
@@ -126,6 +128,7 @@ pub struct ApiBuilder {
     credential: Option<Credential>,
     login_params: Option<LoginParams>,
     cookie_jar: Option<Arc<Jar>>,
+    download_options: Option<DownloadOptions>,
     user_id: Option<u64>,
 }
 
@@ -136,6 +139,7 @@ impl ApiBuilder {
             credential: None,
             login_params: None,
             cookie_jar: None,
+            download_options: None,
             user_id: None,
         }
     }
@@ -157,6 +161,11 @@ impl ApiBuilder {
 
     pub fn cookie_jar(mut self, cookie_jar: Arc<Jar>) -> Self {
         self.cookie_jar = Some(cookie_jar);
+        self
+    }
+
+    pub fn download_options(mut self, download_options: DownloadOptions) -> Self {
+        self.download_options = Some(download_options);
         self
     }
 
@@ -194,12 +203,17 @@ impl ApiBuilder {
         let client = Client::builder()
             .cookie_provider(cookie_jar.clone())
             .build()?;
+        let download_options = match self.download_options {
+            Some(download_options) => download_options,
+            None => DownloadOptions::default(),
+        };
         Ok(Api {
             api_credential,
             credential: Arc::new(RwLock::new(credential)),
             login_params: login_params.clone(),
             cookie_jar,
             client,
+            download_options,
             user_id: self.user_id,
         })
     }

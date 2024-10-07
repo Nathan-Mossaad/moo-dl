@@ -17,6 +17,7 @@ use reqwest::RequestBuilder;
 use crate::Result;
 
 /// Options for the downloader
+#[derive(Debug, Clone)]
 pub struct DownloadOptions {
     /// Strategy for handling file updates
     pub file_update_strategy: FileUpdateStrategy,
@@ -27,16 +28,18 @@ pub struct DownloadOptions {
 }
 
 /// Strategy for handling file updates
+#[derive(Debug, Clone)]
 pub enum FileUpdateStrategy {
-    /// Don't update files
-    Ignore,
-    /// Overwrite existing files
-    Overwrite,
     /// Create a archived version of the file and redownload
     Archive,
+    /// Overwrite existing files
+    Overwrite,
+    /// Don't update files
+    Ignore,
 }
 
 /// Countainer formats for storing websites
+#[derive(Debug, Clone)]
 pub enum SiteStore {
     /// Use singlefile see: https://github.com/gildas-lormeau/single-file-cli
     SingleFile,
@@ -44,6 +47,16 @@ pub enum SiteStore {
     MonoPDF,
     /// Create a standard PDF file
     StandardPDF,
+}
+
+impl Default for DownloadOptions {
+    fn default() -> Self {
+        Self {
+            file_update_strategy: FileUpdateStrategy::Archive,
+            site_store: SiteStore::SingleFile,
+            force_update: false,
+        }
+    }
 }
 
 impl FileUpdateStrategy {
