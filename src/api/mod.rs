@@ -176,11 +176,34 @@ impl Api {
             }
             BrowserState::None => {}
         }
+
+        trace!("Need session cooke for Browser");
+        let credential_guard = self.acuire_credential().await?;
+        let credential = credential_guard
+            .as_ref()
+            .ok_or("Could not get Credential for session cookie")?;
+        let browser_cookies = vec![
+            chromiumoxide::cdp::browser_protocol::network::CookieParam::builder()
+                .domain(
+                    credential
+                        .instance_url
+                        .host_str()
+                        .ok_or("Credential has invalid URL")?
+                        .to_string(),
+                )
+                .name("MoodleSession")
+                .value(credential.session_cookie.to_string())
+                .build()?,
+        ];
+
         debug!("Starting browser");
         let browser = Browser::web2pdf_launch().await;
 
         match browser {
             Ok(browser) => {
+                // Set moodle session cookie
+                browser.set_cookies(browser_cookies).await?;
+
                 self.browser.write().await.replace(browser);
                 *browser_state_guard = BrowserState::Running;
                 Ok(self.browser.read().await)
