@@ -5,6 +5,7 @@ use futures::future::join_all;
 use serde::Deserialize;
 
 use crate::api::Api;
+use crate::downloader::check_for_updated_contents;
 use crate::Result;
 
 mod content_types;
@@ -60,6 +61,7 @@ impl Download for Module {
             Module::Resource(resource) => resource.download(api, path).await,
             Module::Folder(folder) => folder.download(api, path).await,
             Module::Url(url) => url.download(api, path).await,
+            Module::Assign(assign) => assign.download(api, path).await,
             _ => {
                 // TODO add missing module downloaders
                 Ok(())
@@ -136,6 +138,36 @@ pub struct Pdfannotator {
 pub struct Assign {
     pub id: u64,
     pub name: String,
+    pub url: String,
+    pub description: Option<String>,
+}
+impl Download for Assign {
+    async fn download(&self, api: &Api, path: &Path) -> Result<()> {
+        let path = path.join(&self.name);
+        if let Some(description) = &self.description {
+            if (api.download_options.force_update)
+                || (check_for_updated_contents(
+                    &description,
+                    &path.join(".moo-dl.description.html"),
+                )
+                .await?)
+            {
+                let pdf_path = path.join("description.pdf");
+                // We can ignore errors as these happen if the file doesn't exist
+                let _ = api
+                    .download_options
+                    .file_update_strategy
+                    .force_archive_file(&pdf_path)
+                    .await;
+                api.save_page(self.url.to_string(), &pdf_path, None).await?;
+            }
+        }
+
+        // TODO add extra request etc., as Assignments do not provide most information via core_course_get_contents
+        // Use: mod_assign_get_submission_status with assignid=<assignmentid/instance>
+
+        Ok(())
+    }
 }
 
 // Basic elements (may need to be converted)

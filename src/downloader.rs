@@ -8,7 +8,7 @@ use std::{
 };
 use tokio::{
     fs::{self, File},
-    io::AsyncWriteExt,
+    io::{AsyncReadExt, AsyncWriteExt},
 };
 use tokio_stream::StreamExt;
 
@@ -124,6 +124,17 @@ impl FileUpdateStrategy {
                 Ok(false)
             }
         }
+    }
+
+    /// Force archives a file / does nothing depending on the file update strategy
+    pub async fn force_archive_file(&self, path: &Path) -> Result<()> {
+        match self {
+            FileUpdateStrategy::Archive => {
+                version_file(path).await?;
+            }
+            _ => {}
+        }
+        Ok(())
     }
 
     /// Downloads a file from the specified URL asynchronously.
@@ -320,4 +331,38 @@ pub async fn download_file_using_tmp(
     fs::rename(tmp_path, path).await?;
 
     Ok(())
+}
+
+/// Saves the given content to the specified file path.
+pub async fn save_to_file(content: &str, path: &Path) -> Result<()> {
+    // Make sure path exists
+    ensure_path_exists(path).await?;
+
+    let mut file = File::create(path).await?;
+    file.write_all(content.as_bytes()).await?;
+    file.flush().await?;
+    Ok(())
+}
+/// Compares the given content to the contents of the specified file path.
+pub async fn compare_to_file_contents(content: &str, path: &Path) -> Result<bool> {
+    let mut file = File::open(path).await?;
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer).await?;
+
+    let file_content = String::from_utf8_lossy(&buffer);
+    Ok(file_content.as_ref() != content)
+}
+/// Checks if the given content has been updated since the last time it was saved to the specified file path.
+/// If file doesn't exist, it will return true (treating it as a change)
+pub async fn check_for_updated_contents(content: &str, path: &Path) -> Result<bool> {
+    match compare_to_file_contents(content, path).await {
+        Ok(false) => return Ok(false),
+        // File isn't equal to content
+        Ok(true) => {}
+        // File doesn't exist
+        Err(_) => {}
+    }
+    // All remaining options are a new file or update
+    save_to_file(content, path).await?;
+    Ok(true)
 }
