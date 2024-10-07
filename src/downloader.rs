@@ -168,7 +168,15 @@ impl SiteStore {
         }
 
         // Save PDF
-        page.web2pdf_save_pdf_mono_standard(file_path).await?;
+        match self {
+            SiteStore::MonoPDF => {
+                page.web2pdf_save_pdf_mono_standard(file_path).await?;
+            }
+            SiteStore::StandardPDF => {
+                page.web2pdf_save_pdf_standard(file_path).await?;
+            }
+            SiteStore::None => {}
+        }
         Ok(())
     }
 }
