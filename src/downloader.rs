@@ -41,8 +41,6 @@ pub enum FileUpdateStrategy {
 /// Countainer formats for storing websites
 #[derive(Debug, Clone)]
 pub enum SiteStore {
-    /// Use singlefile see: https://github.com/gildas-lormeau/single-file-cli
-    SingleFile,
     /// Create a PDF file consisting of a single page
     MonoPDF,
     /// Create a standard PDF file
@@ -55,7 +53,7 @@ impl Default for DownloadOptions {
     fn default() -> Self {
         Self {
             file_update_strategy: FileUpdateStrategy::Archive,
-            site_store: SiteStore::SingleFile,
+            site_store: SiteStore::MonoPDF,
             force_update: false,
         }
     }
