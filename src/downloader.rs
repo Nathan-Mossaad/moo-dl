@@ -12,7 +12,9 @@ use tokio::{
 };
 use tokio_stream::StreamExt;
 
+use chromiumoxide::cdp::browser_protocol::target::CreateTargetParams;
 use reqwest::RequestBuilder;
+use web2pdf_lib::{Browser, BrowserWeb2Pdf, PageWeb2Pdf};
 
 use crate::Result;
 
@@ -137,6 +139,36 @@ impl FileUpdateStrategy {
             info!("Downloading/Updating file {}", path.display());
             download_file_using_tmp(request, path, last_modified).await?;
         }
+        Ok(())
+    }
+}
+
+impl SiteStore {
+    pub async fn save_page(
+        &self,
+        browser: &Browser,
+        url: impl Into<String>,
+        file_path: &Path,
+    ) -> Result<()> {
+        // Check if PDF creation is wanted
+        if let SiteStore::None = self {
+            return Ok(());
+        }
+
+        let new_page_params = CreateTargetParams::builder().url(url).build()?;
+        let page = browser.web2pdf_new_page(new_page_params).await?;
+
+        // Make sure file doesn't exist
+        match fs::remove_file(file_path).await {
+            Ok(_) => {}
+            // File could not be removed, path might also not exists:
+            Err(_) => {
+                ensure_path_exists(file_path).await?;
+            }
+        }
+
+        // Save PDF
+        page.web2pdf_save_pdf_mono_standard(file_path).await?;
         Ok(())
     }
 }

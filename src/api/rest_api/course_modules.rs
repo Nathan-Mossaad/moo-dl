@@ -59,6 +59,7 @@ impl Download for Module {
         match self {
             Module::Resource(resource) => resource.download(api, path).await,
             Module::Folder(folder) => folder.download(api, path).await,
+            Module::Url(url) => url.download(api, path).await,
             _ => {
                 // TODO add missing module downloaders
                 Ok(())
@@ -153,6 +154,25 @@ pub struct Label {
 pub struct Url {
     pub id: u64,
     pub name: String,
+    pub contents: Vec<Content>,
+}
+impl Download for Url {
+    async fn download(&self, api: &Api, path: &Path) -> Result<()> {
+        let download_path = path.join(&self.name);
+
+        let file_futures = self
+            .contents
+            .iter()
+            .map(|content| content.download(api, &download_path));
+
+        let downloads = join_all(file_futures).await;
+        // Return error if any download fails
+        for download in downloads {
+            download?;
+        }
+
+        Ok(())
+    }
 }
 
 // Pages that need to be converted

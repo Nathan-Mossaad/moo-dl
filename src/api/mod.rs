@@ -285,6 +285,29 @@ impl Api {
 
         Ok(())
     }
+
+    /// Save a Webpage to a file
+    pub async fn save_page(
+        &self,
+        url: impl Into<String>,
+        file_path: &Path,
+        last_modified: Option<u64>,
+    ) -> Result<()> {
+        // Archive if needed
+        if self.download_options
+            .file_update_strategy
+            .archive_file(file_path, last_modified)
+            .await?
+        {
+            let browser_guard = self.acuire_browser().await?;
+            let browser = browser_guard.as_ref().unwrap();
+
+            info!("Saving/Updating file {}", file_path.display());
+            self.download_options.site_store.save_page(browser, url, file_path).await?;
+        }
+
+        Ok(())
+    }
 }
 
 /// Builder for the api

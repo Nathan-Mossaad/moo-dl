@@ -21,6 +21,7 @@ impl Download for Content {
     async fn download(&self, api: &Api, path: &Path) -> Result<()> {
         match self {
             Content::File(file) => file.download(api, path).await,
+            Content::Url(url) => url.download(api, path).await,
             _ => {
                 // TODO add missing module downloaders
                 Ok(())
@@ -55,4 +56,17 @@ pub struct Url {
     pub filename: String,
     pub fileurl: String,
     pub timemodified: u64,
+}
+impl Download for Url {
+    async fn download(&self, api: &Api, path: &Path) -> Result<()> {
+        let file_name = format!("{}.pdf", self.filename);
+        let file_path = path.join(file_name);
+        api.save_page(
+            self.fileurl.to_string(),
+            &file_path,
+            Some(self.timemodified),
+        )
+        .await?;
+        Ok(())
+    }
 }
