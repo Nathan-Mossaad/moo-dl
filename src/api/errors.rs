@@ -32,3 +32,24 @@ impl fmt::Display for LoginFailedError {
         write!(f, "Login failed with reason: {}", self.message)
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct BrowserStartFailedError {
+    message: String,
+}
+
+impl BrowserStartFailedError {
+    pub fn new(message: impl Into<String>) -> Self {
+        BrowserStartFailedError {
+            message: message.into(),
+        }
+    }
+}
+
+impl StdError for BrowserStartFailedError {}
+
+impl fmt::Display for BrowserStartFailedError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Starting Browser failed with reason: {}", self.message)
+    }
+}

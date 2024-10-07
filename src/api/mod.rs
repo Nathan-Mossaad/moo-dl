@@ -5,17 +5,31 @@ use tokio::sync::{Mutex, RwLock};
 
 use reqwest::{cookie::Jar, Client, IntoUrl};
 
+use web2pdf_lib::{Browser, BrowserWeb2Pdf};
+
 pub mod errors;
 pub mod login;
 pub mod rest_api;
 
 use crate::{downloader::DownloadOptions, Result};
-use errors::LoginFailedError;
+use errors::{BrowserStartFailedError, LoginFailedError};
 
 use login::{
     from_params::{LoginFromParams, LoginParams},
     ApiCredential, Credential,
 };
+
+/// Browser state
+#[derive(Debug)]
+enum BrowserState {
+    /// The browser is running
+    Running,
+    /// Failed to start the browser
+    StartupFailure,
+    /// The browser is not running
+    None,
+}
+
 #[derive(Debug, Clone)]
 /// The main api struct
 pub struct Api {
@@ -24,11 +38,15 @@ pub struct Api {
     /// The credential used for authentication
     credential: Arc<RwLock<Option<Credential>>>,
     /// The login params used to create a credential if needed
-    pub login_params: Arc<Mutex<LoginParams>>,
+    login_params: Arc<Mutex<LoginParams>>,
     /// The cookie jar that may contain the session cookie
     pub cookie_jar: Arc<Jar>,
     /// The client used for requests
     pub client: Client,
+    /// The browser used for pdf generation
+    browser: Arc<RwLock<Option<Browser>>>,
+    /// The current running state of the browser
+    browser_state: Arc<Mutex<BrowserState>>,
     /// Download options
     pub download_options: DownloadOptions,
     /// The user id of the current user
@@ -109,6 +127,80 @@ impl Api {
                 Err(e)
             }
         }
+    }
+
+    async fn get_browser(&self) -> Option<tokio::sync::RwLockReadGuard<'_, Option<Browser>>> {
+        let browser_guard = self.browser.read().await;
+        if browser_guard.as_ref().is_some() {
+            Some(browser_guard)
+        } else {
+            None
+        }
+    }
+    /// Acuire a browser
+    /// If a browser already exists, it will be returned
+    /// If no browser exists, it will be created
+    ///
+    /// If the login fails, it will return an error for all calls
+    pub async fn acuire_browser(
+        &self,
+    ) -> Result<tokio::sync::RwLockReadGuard<'_, Option<Browser>>> {
+        {
+            // Check if browser exists
+            let browser_guard = self.get_browser().await;
+            if browser_guard.is_some() {
+                return Ok(browser_guard.unwrap());
+            }
+            // browser_guard goes out of scope
+        }
+
+        trace!("No existing browser found, trying to start one");
+        // Acquire lock on login params
+        let mut browser_state_guard = self.browser_state.lock().await;
+        match browser_state_guard.deref() {
+            BrowserState::StartupFailure => {
+                return Err(Box::new(BrowserStartFailedError::new(
+                    "Starting browser already failed in other thread!",
+                )));
+            }
+            BrowserState::Running => {
+                let browser_guard = self.get_browser().await;
+                match browser_guard {
+                    Some(browser) => return Ok(browser),
+                    None => {
+                        return Err(Box::new(BrowserStartFailedError::new(
+                            "Catastrophic error, could not get existing browser: Pls report this",
+                        )))
+                    }
+                }
+            }
+            BrowserState::None => {}
+        }
+        debug!("Starting browser");
+        let browser = Browser::web2pdf_launch().await;
+
+        match browser {
+            Ok(browser) => {
+                self.browser.write().await.replace(browser);
+                *browser_state_guard = BrowserState::Running;
+                Ok(self.browser.read().await)
+            }
+            Err(e) => {
+                *browser_state_guard = BrowserState::StartupFailure;
+                Err(e)
+            }
+        }
+    }
+
+    pub async fn close_browser(&self) -> Result<()> {
+        let mut browser_guard = self.browser.write().await;
+        if browser_guard.is_some() {
+            let browser = browser_guard.as_mut().unwrap();
+            browser.close().await?;
+            browser.wait().await?;
+            *browser_guard = None;
+        }
+        Ok(())
     }
 
     /// Get the user id of the current user
@@ -268,6 +360,8 @@ impl ApiBuilder {
             client,
             download_options,
             user_id: self.user_id,
+            browser: Arc::new(RwLock::new(None)),
+            browser_state: Arc::new(Mutex::new(BrowserState::None)),
         })
     }
 }

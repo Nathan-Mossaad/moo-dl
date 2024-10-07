@@ -23,6 +23,7 @@ tracing-indicatif = "0.3"
 chromiumoxide = { version = "0.7", features = [
     "tokio-runtime",
 ], default-features = false }
+web2pdf_lib = "0.1"
 base64 = "0.22"
 select = "0.6.0"
 totp-rs = "5.6"
