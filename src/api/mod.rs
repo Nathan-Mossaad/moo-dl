@@ -1,13 +1,13 @@
 use tracing::{debug, info, trace};
 
-use std::{ops::Deref, sync::Arc};
+use std::{ops::Deref, path::Path, sync::Arc};
 use tokio::sync::{Mutex, RwLock};
 
-use reqwest::{cookie::Jar, Client};
+use reqwest::{cookie::Jar, Client, IntoUrl};
 
 pub mod errors;
 pub mod login;
-mod rest_api;
+pub mod rest_api;
 
 use crate::{downloader::DownloadOptions, Result};
 use errors::LoginFailedError;
@@ -115,6 +115,59 @@ impl Api {
     pub async fn acuire_user_id(&mut self) -> Result<()> {
         let site_info = self.get_core_webservice_get_site_info().await?;
         self.user_id = Some(site_info.userid);
+        Ok(())
+    }
+
+    /// Download a file that is directly accessible via the moodle api
+    pub async fn download_file<U: IntoUrl>(
+        &self,
+        url: U,
+        download_path: &Path,
+        last_modified: Option<u64>,
+    ) -> Result<()> {
+        let request = self
+            .client
+            .get(url)
+            .query(&[("token", self.api_credential.wstoken.as_str())]);
+
+        self.download_options
+            .file_update_strategy
+            .download_from_requestbuilder(request, download_path, last_modified)
+            .await?;
+
+        Ok(())
+    }
+
+    /// Download a file from api data
+    ///
+    /// # Arguments
+    /// * `path` - The folder where the file should be downloaded to
+    /// * `filename` - The name of the file according to the moodle api
+    /// * `filepath` - The path to the file accroding to the moodle api
+    /// * `fileurl` - The url to the file according to the moodle api
+    /// * `timemodified` - The time the file was last modified according to the moodle api
+    pub async fn download_file_from_api_params(
+        &self,
+        path: &Path,
+        filename: &str,
+        filepath: &str,
+        fileurl: &str,
+        timemodified: u64,
+    ) -> Result<()> {
+        let mut fixed_filepath;
+        let custom_path = if filepath.starts_with("/") {
+            fixed_filepath = ".".to_string();
+            fixed_filepath.push_str(filepath);
+            &fixed_filepath
+        } else {
+            filepath
+        };
+
+        let download_path = &path.join(custom_path).join(filename);
+
+        self.download_file(fileurl, download_path, Some(timemodified))
+            .await?;
+
         Ok(())
     }
 }

@@ -134,6 +134,7 @@ impl FileUpdateStrategy {
         last_modified: Option<u64>,
     ) -> Result<()> {
         if self.archive_file(path, last_modified).await? {
+            info!("Downloading/Updating file {}", path.display());
             download_file_using_tmp(request, path, last_modified).await?;
         }
         Ok(())

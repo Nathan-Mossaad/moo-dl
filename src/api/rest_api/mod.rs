@@ -1,8 +1,9 @@
-use course_modules::Module;
-use serde::Deserialize;
 use tracing::debug;
 
+use std::path::Path;
+
 use futures::future::join_all;
+use serde::Deserialize;
 
 use crate::Result;
 
@@ -10,6 +11,7 @@ use super::errors::MissingUserIdError;
 use super::Api;
 
 pub mod course_modules;
+use course_modules::{Download, Module};
 
 // Descriptions taken from generated moodle docs these can be accessed on any moodle instance with administrator rights via: http://example.com/admin/webservice/documentation.php
 #[derive(Debug, Deserialize)]
@@ -46,15 +48,41 @@ pub struct ToolMobileCallExternalFunctionsResponse {
 }
 // TODO remove dead_code warning
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct CoreCourseGetContents(Vec<CoreCourseGetContentsElement>);
+impl Download for CoreCourseGetContents {
+    async fn download(&self, api: &Api, path: &Path) -> Result<()> {
+        let file_futures = self.0.iter().map(|element| element.download(api, &path));
+        let downloads = join_all(file_futures).await;
+        // Return error if any download fails
+        for download in downloads {
+            download?;
+        }
+        Ok(())
+    }
+}
 // TODO remove dead_code warning
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct CoreCourseGetContentsElement {
     pub id: u64,
     pub name: String,
     pub modules: Vec<Module>,
+}
+impl Download for CoreCourseGetContentsElement {
+    async fn download(&self, api: &Api, path: &Path) -> Result<()> {
+        let download_path = path.join(&self.name);
+        let file_futures = self
+            .modules
+            .iter()
+            .map(|module| module.download(api, &download_path));
+        let downloads = join_all(file_futures).await;
+        // Return error if any download fails
+        for download in downloads {
+            download?;
+        }
+        Ok(())
+    }
 }
 
 impl Api {
