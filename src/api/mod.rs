@@ -1,6 +1,10 @@
 use tracing::{debug, info, trace};
 
-use std::{ops::Deref, path::Path, sync::Arc};
+use std::{
+    ops::Deref,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use tokio::sync::{Mutex, RwLock};
 
 use reqwest::{cookie::Jar, Client, IntoUrl};
@@ -272,6 +276,15 @@ impl Api {
         fileurl: &str,
         timemodified: u64,
     ) -> Result<()> {
+        let download_path = &Api::assemble_path_from_api_params(path, filename, filepath);
+
+        self.download_file(fileurl, download_path, Some(timemodified))
+            .await?;
+
+        Ok(())
+    }
+
+    pub fn assemble_path_from_api_params(path: &Path, filename: &str, filepath: &str) -> PathBuf {
         let mut fixed_filepath;
         let custom_path = if filepath.starts_with("/") {
             fixed_filepath = ".".to_string();
@@ -281,12 +294,7 @@ impl Api {
             filepath
         };
 
-        let download_path = &path.join(custom_path).join(filename);
-
-        self.download_file(fileurl, download_path, Some(timemodified))
-            .await?;
-
-        Ok(())
+        path.join(custom_path).join(filename)
     }
 
     /// Save a Webpage to a file
