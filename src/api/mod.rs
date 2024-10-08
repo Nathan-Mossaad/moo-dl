@@ -11,7 +11,10 @@ pub mod errors;
 pub mod login;
 pub mod rest_api;
 
-use crate::{downloader::DownloadOptions, Result};
+use crate::{
+    downloader::{write_modified_time, DownloadOptions},
+    Result,
+};
 use errors::{BrowserStartFailedError, LoginFailedError};
 
 use login::{
@@ -308,6 +311,10 @@ impl Api {
                 .site_store
                 .save_page(browser, url, file_path)
                 .await?;
+
+            if let Some(last_modified) = last_modified {
+                write_modified_time(file_path, last_modified).await?;
+            }
         }
 
         Ok(())
