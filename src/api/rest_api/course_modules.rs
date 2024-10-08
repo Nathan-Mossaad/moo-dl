@@ -64,6 +64,7 @@ impl Download for Module {
             Module::Assign(assign) => assign.download(api, path).await,
             Module::Label(label) => label.download(api, path).await,
             Module::Url(url) => url.download(api, path).await,
+            Module::Page(page) => page.download(api, path).await,
             _ => {
                 // TODO add missing module downloaders
                 Ok(())
@@ -256,6 +257,47 @@ impl Download for Url {
 pub struct Page {
     pub id: u64,
     pub name: String,
+    pub url: String,
+    pub contents: Option<Vec<Content>>,
+}
+impl Download for Page {
+    async fn download(&self, api: &Api, path: &Path) -> Result<()> {
+        let contents = match &self.contents {
+            Some(contents) => contents,
+            None => return Ok(()),
+        };
+
+        let download_path = path.join(&self.name);
+
+        // Create a PDF version from the website, in case of extra content, e.g. images that aren't in the pure html
+        let lowest_last_modified = contents
+            .iter()
+            .map(|content| match content {
+                Content::File(file) => Some(file.timemodified),
+                Content::Url(url) => Some(url.timemodified),
+                _ => None,
+            })
+            .flatten()
+            .min();
+        if let Some(last_modified) = lowest_last_modified {
+            let pdf_path = download_path.join("page.pdf");
+            // Generate_pdf
+            api.save_page(&self.url, &pdf_path, Some(last_modified))
+                .await?;
+        }
+
+        let file_futures = contents
+            .iter()
+            .map(|content| content.download(api, &download_path));
+
+        let downloads = join_all(file_futures).await;
+        // Return error if any download fails
+        for download in downloads {
+            download?;
+        }
+
+        Ok(())
+    }
 }
 
 // TODO remove dead_code warning
