@@ -2,7 +2,10 @@ use std::fmt::Debug;
 use std::path::Path;
 
 use futures::future::join_all;
+use regex::Regex;
+use select::{document::Document, predicate::Name};
 use serde::Deserialize;
+use tracing::{info, trace};
 
 use crate::api::Api;
 use crate::downloader::check_for_updated_contents;
@@ -65,6 +68,7 @@ impl Download for Module {
             Module::Label(label) => label.download(api, path).await,
             Module::Url(url) => url.download(api, path).await,
             Module::Page(page) => page.download(api, path).await,
+            Module::Quiz(quiz) => quiz.download(api, path).await,
             _ => {
                 // TODO add missing module downloaders
                 Ok(())
@@ -306,6 +310,75 @@ impl Download for Page {
 pub struct Quiz {
     pub id: u64,
     pub name: String,
+    pub url: String,
+    pub instance: u64,
+}
+impl Download for Quiz {
+    async fn download(&self, api: &Api, path: &Path) -> Result<()> {
+        let download_path = path.join(&self.name);
+        // We need a valid session cookie for the following (but we don't actually need the credential)
+        let credential_guard = api.acuire_credential().await?;
+        let credential = credential_guard
+            .as_ref()
+            .ok_or("Could not get Credential for session cookie")?;
+
+        trace!(
+            "Attempting to get available quiz attempts for quiz id: {} name: {}",
+            self.id,
+            self.name
+        );
+        info!("Checking for quiz attempts for quiz: {}", self.name);
+        let response = api
+            .client
+            .get(&self.url)
+            .header(
+                "Cookie",
+                "MoodleSession=".to_string() + credential.session_cookie.as_str(),
+            )
+            .send()
+            .await?;
+
+        let html = response.text().await?;
+        let document = Document::from(html.as_str());
+
+        let url_start = credential.instance_url.to_string() + "mod/quiz/review.php";
+        let url_contains = "cmid=".to_string() + self.id.to_string().as_str();
+        println!("URL start: {}", url_start);
+        println!("URL contains: {}", url_contains);
+
+        let response_url: Vec<_> = document
+            .find(Name("a"))
+            .map(|element| element.attr("href"))
+            .flatten()
+            .filter(|href| href.starts_with(&url_start) && href.contains(&url_contains))
+            .collect();
+        trace!("Quiz: Response token: {:?}", response_url);
+
+        let page_futures = response_url.into_iter().map(|url| {
+            let download_path = download_path.clone();
+            async move {
+                let regex = Regex::new(r"attempt=(\d+)").unwrap();
+                let attemptnr = regex
+                    .captures(url)
+                    .and_then(|captures| captures.get(1).map(|match_| match_.as_str()))
+                    .ok_or("Could not extract attemptnr from url")?;
+                api.save_page(
+                    url,
+                    &download_path.join(attemptnr.to_string() + ".pdf"),
+                    None,
+                )
+                .await
+            }
+        });
+
+        let page_saves = join_all(page_futures).await;
+        // Return error if any download fails
+        for page_save in page_saves {
+            page_save?;
+        }
+
+        Ok(())
+    }
 }
 
 // TODO remove dead_code warning
