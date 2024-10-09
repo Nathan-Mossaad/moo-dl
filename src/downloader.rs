@@ -127,10 +127,17 @@ impl FileUpdateStrategy {
     }
 
     /// Force archives a file / does nothing depending on the file update strategy
-    pub async fn force_archive_file(&self, path: &Path) -> Result<()> {
+    /// Setting remove to true, guarantees, thate the file/folder doesn't exist anymore
+    pub async fn force_archive_file(&self, path: &Path, remove: bool) -> Result<()> {
         match self {
             FileUpdateStrategy::Archive => {
                 version_file(path).await?;
+            }
+            FileUpdateStrategy::Overwrite => {
+                if remove {
+                    let _ = fs::remove_file(path).await;
+                    let _ = fs::remove_dir_all(path).await;
+                }
             }
             _ => {}
         }

@@ -71,6 +71,7 @@ impl Download for Module {
             Module::Page(page) => page.download(api, path).await,
             Module::Quiz(quiz) => quiz.download(api, path).await,
             Module::Glossary(glossary) => glossary.download(api, path).await,
+            Module::Vpl(vpl) => vpl.download(api, path).await,
             _ => {
                 // TODO add missing module downloaders
                 Ok(())
@@ -197,7 +198,7 @@ impl Download for Assign {
                 let _ = api
                     .download_options
                     .file_update_strategy
-                    .force_archive_file(&pdf_path)
+                    .force_archive_file(&pdf_path, false)
                     .await;
                 api.save_page(self.url.to_string(), &pdf_path, None).await?;
             }
@@ -409,7 +410,7 @@ impl Download for Glossary {
             let _ = api
                 .download_options
                 .file_update_strategy
-                .force_archive_file(&pdf_path)
+                .force_archive_file(&pdf_path, false)
                 .await;
         }
 
@@ -425,6 +426,140 @@ impl Download for Glossary {
 pub struct Vpl {
     pub id: u64,
     pub name: String,
+    pub url: String,
+}
+impl Download for Vpl {
+    async fn download(&self, api: &Api, path: &Path) -> Result<()> {
+        let vpl_folder = path.join(self.name.to_string() + ".vpl");
+        // Support force update
+        if api.download_options.force_update {
+            // We can ignore errors as these happen if the file doesn't exist
+            let _ = api
+                .download_options
+                .file_update_strategy
+                .force_archive_file(&vpl_folder, true)
+                .await;
+        }
+
+        let mut description_page_url = api.api_credential.instance_url.to_string();
+        description_page_url.push_str("mod/vpl/view.php?id=");
+        description_page_url.push_str(&self.id.to_string());
+
+        // https://moodle.rwth-aachen.de/mod/vpl/views/downloadrequiredfiles.php?id=1643546
+        let description_files_url = api
+            .api_credential
+            .instance_url
+            .join("mod/vpl/views/downloadrequiredfiles.php")?
+            .join(&("?id=".to_string() + &self.id.to_string()))?;
+
+        let mut submission_page_url = api.api_credential.instance_url.to_string();
+        submission_page_url.push_str("mod/vpl/forms/submissionview.php?id=");
+        submission_page_url.push_str(&self.id.to_string());
+
+        // trace!("VPL: description page url: {}", description_page_url);
+        // trace!("VPL: description files url: {}", description_files_url);
+        // trace!("VPL: submission page url: {}", submission_page_url);
+
+        let credential_guard = api.acuire_credential().await?;
+        let credential = credential_guard
+            .as_ref()
+            .ok_or("Could not get Credential for session cookie")?;
+
+        // Download files
+        let description_file_request = api.client.get(description_files_url).header(
+            "Cookie",
+            "MoodleSession=".to_string() + credential.session_cookie.as_str(),
+        );
+        api.download_options
+            .file_update_strategy
+            .download_from_requestbuilder(
+                description_file_request,
+                &vpl_folder.join("description_files.zip"),
+                None,
+            )
+            .await?;
+
+        // Save pages
+        api.save_page(
+            description_page_url,
+            &vpl_folder.join("description.pdf"),
+            None,
+        )
+        .await?;
+        api.save_page(
+            &submission_page_url,
+            &vpl_folder.join("submission.pdf"),
+            None,
+        )
+        .await?;
+
+        // // Check if submission_files_url exists
+        // let submission_files_path = vpl_folder.join("submission_files.zip");
+        // // Check if submission_files are downloaded
+        // if api
+        //     .download_options
+        //     .file_update_strategy
+        //     .archive_file(&submission_files_path, None)
+        //     .await?
+        // {
+        let response = api
+            .client
+            .get(submission_page_url)
+            .header(
+                "Cookie",
+                "MoodleSession=".to_string() + credential.session_cookie.as_str(),
+            )
+            .send()
+            .await?;
+
+        let html = response.text().await?;
+        let document = Document::from(html.as_str());
+
+        let url_start =
+            credential.instance_url.to_string() + "mod/vpl/views/downloadsubmission.php";
+        let url_contains = "id=".to_string() + self.id.to_string().as_str();
+
+        let response_url: Vec<_> = document
+            .find(Name("a"))
+            .map(|element| element.attr("href"))
+            .flatten()
+            .filter(|href| href.starts_with(&url_start) && href.contains(&url_contains))
+            .collect();
+
+        let page_futures = response_url.into_iter().map(|url| {
+            let download_path = vpl_folder.clone();
+            async move {
+                let regex = Regex::new(r"submissionid=(\d+)").unwrap();
+                let submissionid = regex
+                    .captures(url)
+                    .and_then(|captures| captures.get(1).map(|match_| match_.as_str()))
+                    .ok_or("Could not extract submissionid from url")?;
+                let request = api.client.get(url).header(
+                    "Cookie",
+                    "MoodleSession=".to_string() + credential.session_cookie.as_str(),
+                );
+                api.download_options
+                    .file_update_strategy
+                    .download_from_requestbuilder(
+                        request,
+                        &download_path.join(
+                            "submission-files_submissionid-".to_string() + submissionid + ".zip",
+                        ),
+                        None,
+                    )
+                    .await
+            }
+        });
+
+        let page_saves = join_all(page_futures).await;
+        // Return error if any download fails
+        for page_save in page_saves {
+            page_save?;
+        }
+        // }
+
+        Ok(())
+    }
 }
 
 // At RWTH mainly OpenCast
