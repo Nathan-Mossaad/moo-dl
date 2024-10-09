@@ -196,7 +196,6 @@ impl Credential {
         let mut moo_dl_url = "".to_string();
         let login_page = browser.new_page(format!("{}/admin/tool/mobile/launch.php?service=moodle_mobile_app&passport=00000&urlscheme=moo-dl", instance_url)).await?;
         debug!("Login page loaded");
-        println!("");
         let mut events = login_page.event_listener::<chromiumoxide::cdp::browser_protocol::network::EventRequestWillBeSent>().await?;
         while let Some(event) = events.next().await {
             trace!("LoginEvent: {:?}", event);

@@ -343,8 +343,6 @@ impl Download for Quiz {
 
         let url_start = credential.instance_url.to_string() + "mod/quiz/review.php";
         let url_contains = "cmid=".to_string() + self.id.to_string().as_str();
-        println!("URL start: {}", url_start);
-        println!("URL contains: {}", url_contains);
 
         let response_url: Vec<_> = document
             .find(Name("a"))
