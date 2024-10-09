@@ -7,6 +7,7 @@ use select::{document::Document, predicate::Name};
 use serde::Deserialize;
 use tracing::{info, trace};
 
+use crate::api::login::Credential;
 use crate::api::Api;
 use crate::downloader::check_for_updated_contents;
 use crate::Result;
@@ -69,6 +70,7 @@ impl Download for Module {
             Module::Url(url) => url.download(api, path).await,
             Module::Page(page) => page.download(api, path).await,
             Module::Quiz(quiz) => quiz.download(api, path).await,
+            Module::Glossary(glossary) => glossary.download(api, path).await,
             _ => {
                 // TODO add missing module downloaders
                 Ok(())
@@ -393,6 +395,27 @@ pub struct Feedback {
 pub struct Glossary {
     pub id: u64,
     pub name: String,
+}
+impl Download for Glossary {
+    async fn download(&self, api: &Api, path: &Path) -> Result<()> {
+        let pdf_path = path.join(self.name.to_string() + ".pdf");
+        let mut glossary_url = api.api_credential.instance_url.to_string();
+        glossary_url.push_str("mod/glossary/print.php?id=");
+        glossary_url.push_str(&self.id.to_string());
+        glossary_url.push_str("&mode&hook=ALL&sortkey&sortorder&offset=0&pagelimit=0");
+
+        if api.download_options.force_update {
+            // We can ignore errors as these happen if the file doesn't exist
+            let _ = api
+                .download_options
+                .file_update_strategy
+                .force_archive_file(&pdf_path)
+                .await;
+        }
+
+        api.save_page(glossary_url, &pdf_path, None).await?;
+        Ok(())
+    }
 }
 
 // Extra
