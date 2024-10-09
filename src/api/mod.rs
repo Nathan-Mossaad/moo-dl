@@ -200,6 +200,7 @@ impl Api {
                 )
                 .name("MoodleSession")
                 .value(credential.session_cookie.to_string())
+                .source_port(-1)
                 .build()?,
         ];
 
@@ -421,7 +422,12 @@ impl ApiBuilder {
             }
         };
         let client = Client::builder()
-            .cookie_provider(cookie_jar.clone())
+            // Don't enable cookie provider as it kills performance
+            // .cookie_provider(cookie_jar.clone())
+            .gzip(true)
+            .brotli(true)
+            .zstd(true)
+            .deflate(true)
             .build()?;
         let download_options = match self.download_options {
             Some(download_options) => download_options,
