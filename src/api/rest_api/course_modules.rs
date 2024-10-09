@@ -72,6 +72,7 @@ impl Download for Module {
             Module::Quiz(quiz) => quiz.download(api, path).await,
             Module::Glossary(glossary) => glossary.download(api, path).await,
             Module::Vpl(vpl) => vpl.download(api, path).await,
+            Module::Grouptool(grouptool) => grouptool.download(api, path).await,
             _ => {
                 // TODO add missing module downloaders
                 Ok(())
@@ -410,7 +411,7 @@ impl Download for Glossary {
             let _ = api
                 .download_options
                 .file_update_strategy
-                .force_archive_file(&pdf_path, false)
+                .force_archive_file(&pdf_path, true)
                 .await;
         }
 
@@ -592,4 +593,21 @@ pub struct HsuForum {
 pub struct Grouptool {
     pub id: u64,
     pub name: String,
+    pub url: String,
+}
+impl Download for Grouptool {
+    async fn download(&self, api: &Api, path: &Path) -> Result<()> {
+        let pdf_path = path.join(self.name.to_string() + ".pdf");
+        if api.download_options.force_update {
+            // We can ignore errors as these happen if the file doesn't exist
+            let _ = api
+                .download_options
+                .file_update_strategy
+                .force_archive_file(&pdf_path, true)
+                .await;
+        }
+
+        api.save_page(&self.url, &pdf_path, None).await?;
+        Ok(())
+    }
 }
