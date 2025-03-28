@@ -90,7 +90,7 @@ pub enum Module {
     Grouptool,
 }
 
-// List of supported modules
+// Update strategy
 #[derive(Debug, Deserialize, Hash, PartialEq, Eq)]
 pub enum UpdateType {
     None,
