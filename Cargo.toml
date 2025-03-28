@@ -4,37 +4,36 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-tokio = { version = "1.38", features = ["macros", "rt-multi-thread"] }
-tokio-stream = "0.1"
-futures = "0.3"
+tokio = { version = "1.44", features = ["macros", "rt-multi-thread"] }
+# tokio-stream = "0.1"
+# futures = "0.3"
 
-# TODO: add compression support gzip, zstd, brotli, deflate
-reqwest = { version = "0.12", features = [
-    "stream",
-    "json",
-    "cookies",
-    "gzip",
-    "brotli",
-    "zstd",
-    "deflate",
-    "http2",
-] }
-http = "1.1"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-regex = "1.10"
+# reqwest = { version = "0.12", features = [
+#     "stream",
+#     "json",
+#     "cookies",
+#     "gzip",
+#     "brotli",
+#     "zstd",
+#     "deflate",
+#     "http2",
+# ] }
+# http = "1.1"
+# serde = { version = "1.0", features = ["derive"] }
+# serde_json = "1.0"
+# regex = "1.10"
 
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
 indicatif = "0.17"
 tracing-indicatif = "0.3"
 
-chromiumoxide = { version = "0.7", features = [
-    "tokio-runtime",
-], default-features = false }
-web2pdf_lib = "0.1"
-base64 = "0.22"
-select = "0.6.0"
-totp-rs = "5.6"
+# chromiumoxide = { version = "0.7", features = [
+#     "tokio-runtime",
+# ], default-features = false }
+# web2pdf_lib = "0.1"
+# base64 = "0.22"
+# select = "0.6.0"
+# totp-rs = "5.6"
 
-chrono = "0.4"
+# chrono = "0.4"

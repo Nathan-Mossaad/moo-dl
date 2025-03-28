@@ -1,0 +1,70 @@
+# Login parameters
+login:
+  # Possibly optional?
+  wstoken: wstoken
+  # Use only one of "api_only / raw / username_passwd / graphical / rwth" is supported
+  # api_only provides limited functionality
+  api_only:
+    url: url
+  raw:
+    url: url
+    cookie: cookie
+  username_password:
+    url: url
+    username: username
+    password: passwd
+  graphical:
+    url: url
+  rwth:
+    username: name
+    password: pass
+    totp: totp
+    totpsecret: totpsecret
+
+# Courses
+courses:
+  math:
+    room_id: 12345
+  english:
+    room_id: 12346
+
+### Further Details
+
+# Modules to sync
+modules:
+  - resource
+  - folder
+  - pdfannotator
+  - assign
+  - label
+  - url
+  - page
+  - quiz
+  - feedback
+  - glossary
+  - vpl
+  # Currently only opencast
+  - lti
+  - forum
+  - hsuforum
+  - grouptool
+
+# One of keep "none / update / archive"
+update_type: archive
+
+# How webpages should be saved (only one)
+page_conversion:
+  # Use the sing-file tool to convert it to an html-document
+  single-file: (only one)
+  # Store entire file as pdf with a single page
+  single_page:
+  # Standard chrome pdf
+  standard:
+
+# Optional: Dir to sync to (Leave empty for working directory
+dir:
+
+# Optional: Regex to filter out files
+file_filters:
+  - reg1
+  - reg2

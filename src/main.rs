@@ -3,16 +3,6 @@ use tracing_indicatif::IndicatifLayer;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-mod api;
-mod downloader;
-
-use api::login::{
-    from_params::{CredentialFromRawParams, LoginParams},
-    ApiCredential,
-};
-use api::rest_api::course_modules::Download;
-use api::Api;
-
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[tokio::main]
@@ -38,30 +28,7 @@ async fn main() -> crate::Result<()> {
         .init();
     // }
 
-    // TODO remove test credentials
-    let cookie_jar = std::sync::Arc::new(reqwest::cookie::Jar::default());
-    let api_credential = ApiCredential {
-    };
-    let login_params = LoginParams::Raw(CredentialFromRawParams {
-    });
-
-    println!("{:?}", api_credential);
-    println!("{:?}", login_params);
-
-    let api = Api::builder()
-        .api_credential(api_credential)
-        .login_params(login_params)
-        .cookie_jar(cookie_jar)
-        .build()?;
-
-    let course = api.core_course_get_contents(40121).await?;
-    println!("{:?}", course);
-    println!("\n\n\n");
-    course
-        .download(&api, &std::path::Path::new("./target/Course"))
-        .await?;
-
-    api.close_browser().await?;
+    println!("Replace me!");
 
     Ok(())
 }
