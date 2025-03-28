@@ -1,1 +1,2 @@
-pub(crate) mod cli;
+pub mod cli;
+pub mod sync_config;
