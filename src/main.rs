@@ -1,7 +1,11 @@
+mod config;
+
 // Animations and logging
 use tracing_indicatif::IndicatifLayer;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
+
+use crate::config::cli;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -28,7 +32,9 @@ async fn main() -> crate::Result<()> {
         .init();
     // }
 
-    println!("Replace me!");
+    let cli = <cli::Cli as clap::Parser>::parse();
+
+    println!("{:?}", cli);
 
     Ok(())
 }
