@@ -20,8 +20,6 @@ pub fn read_config<P: AsRef<Path>>(path: P) -> Result<Config> {
     Ok(config)
 }
 
-// Todo correct Config struct
-
 /// Top-level configuration structure
 #[derive(Debug, Deserialize)]
 pub struct Config {
