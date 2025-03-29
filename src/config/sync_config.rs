@@ -23,22 +23,22 @@ pub fn read_config<P: AsRef<Path>>(path: P) -> Result<Config> {
 /// Top-level configuration structure
 #[derive(Debug, Deserialize)]
 pub struct Config {
-    wstoken: String,
-    login: Login,
-    courses: Vec<Course>,
-    modules: HashSet<Module>,
-    points: bool,
-    update_strategy: UpdateStrategy,
-    chrome_executable: Option<PathBuf>,
-    youtube: Option<Youtube>,
-    page_conversion: PageConversion,
-    dir: Option<String>,
-    file_filters: Option<Vec<String>>,
+    pub wstoken: String,
+    pub login: Login,
+    pub courses: Vec<Course>,
+    pub modules: HashSet<Module>,
+    pub points: bool,
+    pub update_strategy: UpdateStrategy,
+    pub chrome_executable: Option<PathBuf>,
+    pub youtube: Option<Youtube>,
+    pub page_conversion: PageConversion,
+    pub dir: Option<String>,
+    pub file_filters: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type")]
-enum Login {
+pub enum Login {
     // Provide api capabilities only
     ApiOnly {
         url: Url,
@@ -65,7 +65,7 @@ enum Login {
 
 /// Course configuration (currently only room_id is provided).
 #[derive(Debug, Deserialize)]
-struct Course {
+pub struct Course {
     id: u64,
     name: String,
 }
@@ -109,7 +109,7 @@ pub struct Youtube {
 /// Page conversion settings – only one of these should be set.
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type", content = "path")]
-enum PageConversion {
+pub enum PageConversion {
     /// Use the single-file tool to convert it to an html-document
     SingleFile(PathBuf),
     /// Store entire file as pdf with a single page
