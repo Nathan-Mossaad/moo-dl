@@ -20,7 +20,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_yml = "0.0.12"
 
 # Async
-tokio = { version = "1.44", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.44", features = ["macros", "rt-multi-thread", "fs"] }
 # tokio-stream = "0.1"
 # futures = "0.3"
 

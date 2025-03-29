@@ -28,7 +28,7 @@ pub struct Config {
     courses: Vec<Course>,
     modules: HashSet<Module>,
     points: bool,
-    update_type: UpdateType,
+    update_strategy: UpdateStrategy,
     chrome_executable: Option<PathBuf>,
     youtube: Option<Youtube>,
     page_conversion: PageConversion,
@@ -92,7 +92,7 @@ pub enum Module {
 
 // Update strategy
 #[derive(Debug, Deserialize, Hash, PartialEq, Eq)]
-pub enum UpdateType {
+pub enum UpdateStrategy {
     None,
     Update,
     Archive,

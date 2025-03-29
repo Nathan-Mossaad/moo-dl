@@ -58,8 +58,8 @@ modules:
 # Enables saving points
 points: true
 
-# One of keep "none / update / archive"
-update_type: Archive
+# One of keep "None / Update / Archive"
+update_strategy: Archive
 
 # Optionally set path of chrome executable (instead of autodetect
 # (may be removed)

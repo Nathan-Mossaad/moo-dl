@@ -1,4 +1,5 @@
 mod config;
+mod update;
 
 // Animations and logging
 use tracing_indicatif::IndicatifLayer;
