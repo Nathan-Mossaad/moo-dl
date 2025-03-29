@@ -36,7 +36,6 @@ async fn main() -> crate::Result<()> {
             .init();
     }
 
-    //
     match cli.command {
         cli::Command::Sync { config_path } => {
             // TODO

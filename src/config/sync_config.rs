@@ -32,7 +32,8 @@ pub struct Config {
     pub chrome_executable: Option<PathBuf>,
     pub youtube: Option<Youtube>,
     pub page_conversion: PageConversion,
-    pub dir: Option<String>,
+    pub dir: Option<PathBuf>,
+    pub log_file: Option<PathBuf>,
     pub file_filters: Option<Vec<String>>,
 }
 

@@ -84,6 +84,9 @@ page_conversion:
 # Optional: Dir to sync to (may be removed)
 # dir: ./cool/path
 
+# Optional: Dir to sync to (may be removed)
+log_file: moo-dl.log
+
 # Optional: Regex to filter out files
 file_filters:
   # - reg1
