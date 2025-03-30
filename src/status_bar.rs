@@ -1,3 +1,4 @@
+// TODO: remove
 #![allow(dead_code)]
 
 use chrono::{Local, Utc};
@@ -111,6 +112,7 @@ impl StatusBar {
         buffer.extend_from_slice(b")\n\n");
 
         file.write_all(&buffer).await?;
+        file.flush().await?;
         Ok(())
     }
 }

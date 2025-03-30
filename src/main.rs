@@ -1,6 +1,7 @@
 mod config;
 mod status_bar;
 mod update;
+mod download;
 
 use std::sync::Arc;
 
