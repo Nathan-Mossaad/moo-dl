@@ -2,6 +2,8 @@ mod config;
 mod status_bar;
 mod update;
 
+use std::sync::Arc;
+
 // Animations and logging
 use tracing_indicatif::IndicatifLayer;
 use tracing_subscriber::layer::SubscriberExt;
@@ -40,11 +42,11 @@ async fn main() -> crate::Result<()> {
     match cli.command {
         cli::Command::Sync { config_path } => {
             let config = read_config(config_path)?;
-            let status = status_bar::StatusBar::default();
+            let status = Arc::new(status_bar::StatusBar::default());
 
             // TODO
-            
-            println!("{}", status);
+
+            println!("{}", status.get_overview().await);
             if let Some(file_path) = config.log_file {
                 status.write_log_to_file(&file_path).await.unwrap();
             }
