@@ -1,5 +1,6 @@
 mod config;
 mod download;
+mod login;
 mod status_bar;
 mod update;
 
@@ -13,7 +14,7 @@ use tracing_subscriber::util::SubscriberInitExt;
 pub use anyhow::Result;
 
 use config::cli;
-use config::sync_config::read_config;
+use config::sync_config::{read_config, Config};
 
 #[tokio::main]
 async fn main() -> crate::Result<()> {
@@ -42,14 +43,19 @@ async fn main() -> crate::Result<()> {
 
     match cli.command {
         cli::Command::Sync { config_path } => {
-            let config = read_config(config_path)?;
+            let config = Arc::new(read_config(config_path)?);
+            // let config_login = config.clone();
+            // let login_handle = tokio::spawn(async move { Config::login(config_login) });
+            let login_handle = Config::login_thread(config.clone()).await;
 
             // TODO
 
             println!("{}", config.status_bar.get_overview().await);
-            if let Some(file_path) = config.log_file {
-                config.status_bar.write_log_to_file(&file_path).await.unwrap();
+            if let Some(file_path) = &config.log_file {
+                config.status_bar.write_log_to_file(file_path).await?;
             }
+            // Kill everything not needed anymore
+            login_handle.abort();
         }
         cli::Command::Setup {} => {
             panic!("TODO: Implement Setup");

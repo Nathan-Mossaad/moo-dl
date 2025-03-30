@@ -4,10 +4,12 @@
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::Context;
 use serde::Deserialize;
+use tokio::sync::RwLock;
 use tracing::debug;
 use url::Url;
 
@@ -27,6 +29,8 @@ pub fn read_config<P: AsRef<Path>>(path: P) -> Result<Config> {
 pub struct Config {
     pub wstoken: String,
     pub login: Login,
+    #[serde(skip)]
+    pub cookie: Arc<RwLock<LoginState>>,
     pub courses: Vec<Course>,
     pub modules: HashSet<Module>,
     pub points: bool,
@@ -61,10 +65,25 @@ pub enum Login {
         url: Url,
     },
     Rwth {
+        #[serde(skip, default = "rwth_url")]
+        url: Url,
         username: String,
         password: String,
         totp: String,
         totp_secret: String,
+    },
+}
+fn rwth_url() -> Url {
+    Url::from_str("https://moodle.rwth-aachen.de/").unwrap()
+}
+
+#[derive(Debug, Default)]
+pub enum LoginState {
+    #[default]
+    NotChecked,
+    Failed,
+    Cookie {
+        cookie: String,
     },
 }
 
