@@ -1,13 +1,13 @@
 // TODO: remove
 #![allow(dead_code)]
 
-use chrono::{Local, Utc};
 use std::path::Path;
+
+use chrono::{Local, Utc};
+use strip_ansi_escapes;
 use tokio::sync::Mutex;
 use tokio::{fs::OpenOptions, io::AsyncWriteExt};
 use tracing::{error, info};
-
-extern crate strip_ansi_escapes;
 
 use crate::Result;
 

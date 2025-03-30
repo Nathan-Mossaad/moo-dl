@@ -11,8 +11,7 @@ use tracing_indicatif::span_ext::IndicatifSpanExt;
 use super::*;
 
 use crate::{
-    config::sync_config::UpdateStrategy,
-    status_bar::StatusBar,
+    config::sync_config::{Config, UpdateStrategy},
     update::{timestamp::set_file_creation, UpdateState},
     Result,
 };
@@ -78,24 +77,24 @@ async fn force_download_file(file_path: &Path, request: RequestBuilder) -> Resul
     Ok(())
 }
 
-impl UpdateStrategy {
+impl Config {
     /// Same as `force_download_file` but only downloads if file does not exist
     /// Additionally writes the event to log
     pub async fn download_file(
-        status_bar: &StatusBar,
+        &self,
         file_path: &Path,
         request: RequestBuilder,
     ) -> Result<()> {
-        match Self::check_exists(file_path).await? {
+        match UpdateStrategy::check_exists(file_path).await? {
             UpdateState::Missing => {
                 force_download_file(file_path, request).await?;
                 let message = file_path.to_str().ok_or_else(|| anyhow!("Invalid path"))?;
-                status_bar.register_new(message).await;
+                self.status_bar.register_new(message).await;
                 Ok(())
             }
             UpdateState::OutOfDate => Err(anyhow!("Impssossible OutOfDate")),
             UpdateState::UpToDate => {
-                status_bar.register_unchanged().await;
+                self.status_bar.register_unchanged().await;
                 Ok(())
             }
         }
@@ -105,12 +104,11 @@ impl UpdateStrategy {
     /// Additionally writes the event to log
     pub async fn download_file_with_timestamp(
         &self,
-        status_bar: &StatusBar,
         file_path: &Path,
         request: RequestBuilder,
         timestamp: u64,
     ) -> Result<()> {
-        match self
+        match self.update_strategy
             .timestamp_check_up_to_date(file_path, timestamp)
             .await?
         {
@@ -119,7 +117,7 @@ impl UpdateStrategy {
                 set_file_creation(file_path, timestamp).await?;
 
                 let message = file_path.to_str().ok_or_else(|| anyhow!("Invalid path"))?;
-                status_bar.register_new(message).await;
+                self.status_bar.register_new(message).await;
                 Ok(())
             }
             UpdateState::OutOfDate => {
@@ -127,11 +125,11 @@ impl UpdateStrategy {
                 set_file_creation(file_path, timestamp).await?;
 
                 let message = file_path.to_str().ok_or_else(|| anyhow!("Invalid path"))?;
-                status_bar.register_updated(message).await;
+                self.status_bar.register_updated(message).await;
                 Ok(())
             }
             UpdateState::UpToDate => {
-                status_bar.register_unchanged().await;
+                self.status_bar.register_unchanged().await;
                 Ok(())
             }
         }

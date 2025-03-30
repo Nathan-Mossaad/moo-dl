@@ -4,12 +4,14 @@
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use anyhow::Context;
 use serde::Deserialize;
 use tracing::debug;
 use url::Url;
 
+use crate::status_bar::StatusBar;
 use crate::Result;
 
 pub fn read_config<P: AsRef<Path>>(path: P) -> Result<Config> {
@@ -35,6 +37,8 @@ pub struct Config {
     pub dir: Option<PathBuf>,
     pub log_file: Option<PathBuf>,
     pub file_filters: Option<Vec<String>>,
+    #[serde(skip)]
+    pub status_bar: Arc<StatusBar>,
 }
 
 #[derive(Debug, Deserialize)]

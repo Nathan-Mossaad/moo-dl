@@ -43,13 +43,12 @@ async fn main() -> crate::Result<()> {
     match cli.command {
         cli::Command::Sync { config_path } => {
             let config = read_config(config_path)?;
-            let status = Arc::new(status_bar::StatusBar::default());
 
             // TODO
 
-            println!("{}", status.get_overview().await);
+            println!("{}", config.status_bar.get_overview().await);
             if let Some(file_path) = config.log_file {
-                status.write_log_to_file(&file_path).await.unwrap();
+                config.status_bar.write_log_to_file(&file_path).await.unwrap();
             }
         }
         cli::Command::Setup {} => {
