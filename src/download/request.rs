@@ -22,7 +22,7 @@ use crate::{
 ///
 /// Uses a temporary file for downloads to prevent data loss in case of UpdateStrategy:Update
 #[instrument(skip(file_path, request))]
-pub async fn force_download_file(file_path: &Path, request: RequestBuilder) -> Result<()> {
+async fn force_download_file(file_path: &Path, request: RequestBuilder) -> Result<()> {
     // Make sure path exists
     ensure_path_exists(file_path).await?;
 

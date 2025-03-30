@@ -4,7 +4,21 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+# Error handeling
 anyhow = "1.0"
+
+# Async
+tokio = { version = "1.44", features = [
+    "macros",
+    "rt-multi-thread",
+    "fs",
+    "io-util",
+    "sync",
+    # TODO: Remove
+    "time",
+] }
+tokio-stream = "0.1"
+#futures = "0.3"
 
 # Config
 clap = { version = "4.5", features = ["derive"] }
@@ -20,19 +34,6 @@ strip-ansi-escapes = "0.2"
 serde = { version = "1.0", features = ["derive"] }
 serde_yml = "0.0.12"
 
-# Async
-tokio = { version = "1.44", features = [
-    "macros",
-    "rt-multi-thread",
-    "fs",
-    "io-util",
-    "sync",
-    # TODO: Remove
-    "time",
-] }
-tokio-stream = "0.1"
-# futures = "0.3"
-
 # Networking
 url = { version = "2.5", features = ["serde"] }
 reqwest = { version = "0.12", features = [
@@ -45,17 +46,17 @@ reqwest = { version = "0.12", features = [
     "deflate",
     "http2",
 ] }
-# http = "1.1"
-# serde = { version = "1.0", features = ["derive"] }
-# serde_json = "1.0"
-# regex = "1.10"
+#http = "1.1"
+#serde_json = "1.0"
+#regex = "1.10"
 
-# chromiumoxide = { version = "0.7", features = [
-#     "tokio-runtime",
-# ], default-features = false }
-# web2pdf_lib = "0.1"
-# base64 = "0.22"
-# select = "0.6.0"
-# totp-rs = "5.6"
+#chromiumoxide = { version = "0.7", features = [
+#    "tokio-runtime",
+#], default-features = false }
+#web2pdf_lib = "0.1"
+#base64 = "0.22"
+#select = "0.6.0"
+#totp-rs = "5.6"
 
+# Time
 chrono = "0.4"
