@@ -1,9 +1,10 @@
+pub mod file;
 pub mod timestamp;
 
 use std::{path::Path, time::UNIX_EPOCH};
 
 use chrono::prelude::{DateTime, Local};
-use tokio::fs;
+use tokio::{fs, io};
 
 use crate::{config::sync_config::UpdateStrategy, Result};
 
@@ -12,6 +13,19 @@ pub enum UpdateState {
     Missing,
     OutOfDate,
     UpToDate,
+}
+
+impl UpdateStrategy {
+    /// Check if a file exists
+    /// # Returns
+    /// UpToDate if file exists
+    pub async fn check_exists(file_path: &Path) -> Result<UpdateState> {
+        match fs::metadata(file_path).await {
+            Ok(_) => Ok(UpdateState::UpToDate),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(UpdateState::Missing),
+            Err(e) => Err(e.into()),
+        }
+    }
 }
 
 /// Archives a file by appending its modified date to the file name.

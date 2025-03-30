@@ -15,21 +15,8 @@ use tokio::{
 use super::*;
 
 impl UpdateStrategy {
-    /// Check if a file exists
-    /// # Returns
-    /// true if file exists
-    pub async fn check_exists(file_path: &Path) -> Result<UpdateState> {
-        match fs::metadata(file_path).await {
-            Ok(_) => Ok(UpdateState::UpToDate),
-            Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(UpdateState::Missing),
-            Err(e) => Err(e.into()),
-        }
-    }
-
     /// Check if file is up date
-    /// # Returns
-    /// true if the file is up to date
-    async fn check_file_date(file_path: &Path, timestamp: u64) -> Result<UpdateState> {
+    async fn timestamp_check_file_date(file_path: &Path, timestamp: u64) -> Result<UpdateState> {
         match fs::metadata(file_path).await {
             Ok(_) => {
                 if timestamp > get_file_creation(file_path).await? {
@@ -48,12 +35,12 @@ impl UpdateStrategy {
     /// (Respects the setting in Update Strategy)
     ///
     /// May delete the file in case of archive or expects the user to overwrite the file in case of update
-    pub async fn check_up_to_date(&self, file_path: &Path, timestamp: u64) -> Result<UpdateState> {
+    pub async fn timestamp_check_up_to_date(&self, file_path: &Path, timestamp: u64) -> Result<UpdateState> {
         match self {
             UpdateStrategy::None => UpdateStrategy::check_exists(file_path).await,
-            UpdateStrategy::Update => UpdateStrategy::check_file_date(file_path, timestamp).await,
+            UpdateStrategy::Update => UpdateStrategy::timestamp_check_file_date(file_path, timestamp).await,
             UpdateStrategy::Archive => {
-                let state = UpdateStrategy::check_file_date(file_path, timestamp).await?;
+                let state = UpdateStrategy::timestamp_check_file_date(file_path, timestamp).await?;
                 if state == UpdateState::OutOfDate {
                     archive_file(file_path).await?;
                 }
