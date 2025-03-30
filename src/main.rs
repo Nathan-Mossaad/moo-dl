@@ -1,4 +1,5 @@
 mod config;
+mod status_bar;
 mod update;
 
 // Animations and logging
@@ -40,6 +41,9 @@ async fn main() -> crate::Result<()> {
         cli::Command::Sync { config_path } => {
             // TODO
             let _config = read_config(config_path)?;
+            let status = status_bar::StatusBar::default();
+
+            println!("{}", status);
         }
         cli::Command::Setup {} => {
             panic!("TODO: Implement Setup");
