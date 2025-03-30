@@ -34,7 +34,7 @@ impl UpdateStrategy {
     /// if the passed timestamp is newer than the version on disk
     /// (Respects the setting in Update Strategy)
     ///
-    /// May delete the file in case of archive or expects the user to overwrite the file in case of update
+    /// May move the file in case of archive or expects the user to overwrite the file in case of update
     pub async fn timestamp_check_up_to_date(&self, file_path: &Path, timestamp: u64) -> Result<UpdateState> {
         match self {
             UpdateStrategy::None => UpdateStrategy::check_exists(file_path).await,
