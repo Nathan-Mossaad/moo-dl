@@ -1,7 +1,12 @@
-use std::fmt;
+use std::{fmt, path::Path};
 
 use chrono::{Local, Utc};
+use tokio::{fs::OpenOptions, io::AsyncWriteExt};
 use tracing::{info, warn};
+
+extern crate strip_ansi_escapes;
+
+use crate::Result;
 
 #[derive(Debug, Default)]
 pub struct StatusBar {
@@ -62,5 +67,30 @@ impl StatusBar {
         self.err += 1;
         let entry = self.create_log_entry(message, "\x1b[31mErr\x1b[0m: ");
         warn!("{}", entry);
+    }
+
+    // Appends contents of self.log to a log file
+    pub async fn write_log_to_file(&self, file_path: &Path) -> Result<()> {
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(file_path)
+            .await?;
+
+        let mut buffer = Vec::new();
+
+        for log_entry in &self.log {
+            buffer.extend_from_slice(&strip_ansi_escapes::strip(&log_entry.as_bytes()));
+            buffer.extend_from_slice(b"\n");
+        }
+
+        buffer.extend_from_slice(b"Total: ");
+        buffer.extend_from_slice(&strip_ansi_escapes::strip(self.to_string().as_bytes()));
+        buffer.extend_from_slice(b"     (Log generated at: ");
+        buffer.extend_from_slice(StatusBar::get_current_time().as_bytes());
+        buffer.extend_from_slice(b")\n\n");
+
+        file.write_all(&buffer).await?;
+        Ok(())
     }
 }

@@ -39,11 +39,15 @@ async fn main() -> crate::Result<()> {
 
     match cli.command {
         cli::Command::Sync { config_path } => {
-            // TODO
-            let _config = read_config(config_path)?;
+            let config = read_config(config_path)?;
             let status = status_bar::StatusBar::default();
 
+            // TODO
+            
             println!("{}", status);
+            if let Some(file_path) = config.log_file {
+                status.write_log_to_file(&file_path).await.unwrap();
+            }
         }
         cli::Command::Setup {} => {
             panic!("TODO: Implement Setup");

@@ -14,13 +14,19 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
 indicatif = "0.17"
 tracing-indicatif = "0.3"
+strip-ansi-escapes = "0.2"
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_yml = "0.0.12"
 
 # Async
-tokio = { version = "1.44", features = ["macros", "rt-multi-thread", "fs"] }
+tokio = { version = "1.44", features = [
+    "macros",
+    "rt-multi-thread",
+    "fs",
+    "io-util",
+] }
 # tokio-stream = "0.1"
 # futures = "0.3"
 
