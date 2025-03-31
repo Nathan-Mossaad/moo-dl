@@ -8,8 +8,9 @@ use std::sync::Arc;
 
 // Animations and logging
 use tracing_indicatif::IndicatifLayer;
-use tracing_subscriber::layer::SubscriberExt;
-use tracing_subscriber::util::SubscriberInitExt;
+use tracing_subscriber::{
+    filter::EnvFilter, layer::SubscriberExt, reload, util::SubscriberInitExt,
+};
 
 pub use anyhow::Result;
 
@@ -20,18 +21,23 @@ use config::sync_config::{read_config, Config};
 async fn main() -> crate::Result<()> {
     // Start logging
     let indicatif_layer = IndicatifLayer::new();
-    let subscriber = tracing_subscriber::registry().with(
-        tracing_subscriber::EnvFilter::try_from_default_env()
-            .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
-    );
+
+    let base_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+    // Create a reloadable layer that wraps the EnvFilter.
+    let (reload_layer, reload_handle) = reload::Layer::new(base_filter);
+
+    // Parse CLI arguments.
     let cli = <cli::Cli as clap::Parser>::parse();
 
+    // Build and initialize the global subscriber.
     if cli.no_animation {
-        subscriber
+        tracing_subscriber::registry()
+            .with(reload_layer)
             .with(tracing_subscriber::fmt::layer().with_ansi(false).compact())
             .init();
     } else {
-        subscriber
+        tracing_subscriber::registry()
+            .with(reload_layer)
             .with(
                 tracing_subscriber::fmt::layer()
                     .with_writer(indicatif_layer.get_stderr_writer())
@@ -44,17 +50,20 @@ async fn main() -> crate::Result<()> {
     match cli.command {
         cli::Command::Sync { config_path } => {
             let config = Arc::new(read_config(config_path)?);
-            // let config_login = config.clone();
-            // let login_handle = tokio::spawn(async move { Config::login(config_login) });
             let login_handle = Config::login_thread(config.clone()).await;
 
             // TODO
 
+            // Show Status bar
             println!("{}", config.status_bar.get_overview().await);
             if let Some(file_path) = &config.log_file {
                 config.status_bar.write_log_to_file(file_path).await?;
             }
-            // Kill everything not needed anymore
+            // Stop outputting error messages
+            reload_handle
+                .modify(|filter| *filter = EnvFilter::new("off"))
+                .expect("Failed to update the filter");
+            // Kill tasks that are no longer needed.
             login_handle.abort();
         }
         cli::Command::Setup {} => {
