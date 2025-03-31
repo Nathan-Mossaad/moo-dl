@@ -1,4 +1,5 @@
 pub mod graphical;
+pub mod rwth;
 pub mod user_pass;
 
 use std::result::Result::Ok;
@@ -8,6 +9,7 @@ use anyhow::{anyhow, Context};
 use regex::Regex;
 use reqwest::cookie::CookieStore;
 use reqwest::Response;
+use rwth::from_rwth;
 use tracing::{debug, info, trace, warn};
 use url::Url;
 
@@ -79,19 +81,27 @@ impl Config {
                 password,
             } => {
                 let login_result = from_username_password(url, username, password, false).await?;
-            *cookie_guard = LoginState::Cookie {
-                cookie: login_result.cookie,
-            };
-            info!("Logged in using, usename & password!");
-            Ok(())
-            },
+                *cookie_guard = LoginState::Cookie {
+                    cookie: login_result.cookie,
+                };
+                info!("Logged in using, username & password!");
+                Ok(())
+            }
             Login::Rwth {
                 url,
                 username,
                 password,
                 totp,
                 totp_secret,
-            } => todo!(),
+            } => {
+                let login_result = from_rwth(url, username, password, totp, totp_secret, false)
+                    .await?;
+                *cookie_guard = LoginState::Cookie {
+                    cookie: login_result.cookie,
+                };
+                info!("Logged in using, RWTH SSO!");
+                Ok(())
+            }
         }
     }
 }
@@ -146,7 +156,10 @@ fn extract_session_cookie<C: CookieStore + 'static>(
         .to_string();
 
     let mut parts = regex_capture.split('=');
-    let session_cookie = parts.nth(1).ok_or(anyhow!("Cookie extractor: could not extract cookie"))?.to_string();
+    let session_cookie = parts
+        .nth(1)
+        .ok_or(anyhow!("Cookie extractor: could not extract cookie"))?
+        .to_string();
 
     debug!("Found Session Cookie {}", session_cookie);
     Ok(session_cookie)
