@@ -50,11 +50,12 @@ reqwest = { version = "0.12", features = [
 #serde_json = "1.0"
 #regex = "1.10"
 
-#chromiumoxide = { version = "0.7", features = [
-#    "tokio-runtime",
-#], default-features = false }
+# Login and browser
+chromiumoxide = { version = "0.7", features = [
+   "tokio-runtime",
+], default-features = false }
 #web2pdf_lib = "0.1"
-#base64 = "0.22"
+base64 = "0.22"
 #select = "0.6.0"
 #totp-rs = "5.6"
 

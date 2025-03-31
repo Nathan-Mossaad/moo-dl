@@ -56,13 +56,13 @@ pub enum Login {
         url: Url,
         cookie: String,
     },
+    Graphical {
+        url: Url,
+    },
     UserPass {
         url: Url,
         username: String,
         password: String,
-    },
-    Graphical {
-        url: Url,
     },
     Rwth {
         #[serde(skip, default = "rwth_url")]
@@ -81,7 +81,7 @@ fn rwth_url() -> Url {
 pub enum LoginState {
     #[default]
     NotChecked,
-    Failed,
+    Unavailable,
     Cookie {
         cookie: String,
     },

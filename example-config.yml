@@ -11,15 +11,15 @@ login:
   type: Raw
   url: http://moodle.example.com
   cookie: cookie
+  # # graphical (opens a browser window to log in)
+  # type: Graphical
+  # url: http://moodle.example.com
   # # user_pass
   # type: UserPass
   # url: http://moodle.example.com
   # username: username
   # password: passwd
-  # # graphical (opens a browser window to log in)
-  # type: Graphical
-  # url: http://moodle.example.com
-  # RWTH specific SSO implementation
+  # # RWTH specific SSO implementation
   # type: Rwth
   # username: name
   # password: pass
