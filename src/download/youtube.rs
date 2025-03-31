@@ -16,8 +16,13 @@ use crate::config::sync_config::Youtube;
 
 impl Youtube {
     /// Downloads a video using yt-dlp and displays a progress bar.
+    /// 
+    /// Don't use directly, use the youtube download queue
     #[instrument(skip(self, url, output_folder))]
     pub async fn download_video(&self, url: &str, output_folder: &Path) -> Result<()> {
+        // Make sure path exists
+        ensure_path_exists(output_folder).await?;
+        
         let mut cmd = Command::new(&self.path);
         cmd.args(&[
             // Force new lines
