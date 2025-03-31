@@ -1,15 +1,20 @@
+// TODO: remove
+#![allow(dead_code)]
+
 pub mod graphical;
 pub mod rwth;
 pub mod user_pass;
 
 use std::result::Result::Ok;
 use std::sync::Arc;
+use std::time::Duration;
 
 use anyhow::{anyhow, Context};
 use regex::Regex;
 use reqwest::cookie::CookieStore;
 use reqwest::Response;
 use rwth::from_rwth;
+use tokio::time::sleep;
 use tracing::{debug, info, trace, warn};
 use url::Url;
 
@@ -24,14 +29,30 @@ pub struct LoginParams {
     wstoken: Option<String>,
 }
 
-impl Login {
-    pub fn get_url(&self) -> &Url {
-        match self {
+impl Config {
+    pub fn get_moodle_url(&self) -> &Url {
+        match &self.login {
             Login::ApiOnly { url } => url,
             Login::Raw { url, .. } => url,
             Login::UserPass { url, .. } => url,
             Login::Graphical { url } => url,
             Login::Rwth { url, .. } => url,
+        }
+    }
+
+    pub async fn get_cookie(&self) -> Option<Arc<String>> {
+        loop {
+            // Separate scope to drop guard
+            {
+                let cookie_guard = self.cookie.read().await;
+                match &*cookie_guard {
+                    LoginState::NotChecked => {}
+                    LoginState::Unavailable => return None,
+                    LoginState::Cookie { cookie } => return Some(cookie.clone()),
+                }
+            }
+            // Retry after some time has elapsed
+            sleep(Duration::from_millis(100)).await;
         }
     }
 }
@@ -61,7 +82,7 @@ impl Config {
             }
             Login::Raw { url: _, cookie } => {
                 *cookie_guard = LoginState::Cookie {
-                    cookie: cookie.to_string(),
+                    cookie: Arc::new(cookie.to_string()),
                 };
                 info!("Logged in using, raw params!");
                 Ok(())
@@ -70,7 +91,7 @@ impl Config {
                 let login_result =
                     graphical::login_graphical(url, &self.chrome_executable, false).await?;
                 *cookie_guard = LoginState::Cookie {
-                    cookie: login_result.cookie,
+                    cookie: Arc::new(login_result.cookie),
                 };
                 info!("Logged in using, raw params!");
                 Ok(())
@@ -82,7 +103,7 @@ impl Config {
             } => {
                 let login_result = from_username_password(url, username, password, false).await?;
                 *cookie_guard = LoginState::Cookie {
-                    cookie: login_result.cookie,
+                    cookie: Arc::new(login_result.cookie),
                 };
                 info!("Logged in using, username & password!");
                 Ok(())
@@ -94,10 +115,10 @@ impl Config {
                 totp,
                 totp_secret,
             } => {
-                let login_result = from_rwth(url, username, password, totp, totp_secret, false)
-                    .await?;
+                let login_result =
+                    from_rwth(url, username, password, totp, totp_secret, false).await?;
                 *cookie_guard = LoginState::Cookie {
-                    cookie: login_result.cookie,
+                    cookie: Arc::new(login_result.cookie),
                 };
                 info!("Logged in using, RWTH SSO!");
                 Ok(())

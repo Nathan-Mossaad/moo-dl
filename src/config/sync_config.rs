@@ -83,7 +83,7 @@ pub enum LoginState {
     NotChecked,
     Unavailable,
     Cookie {
-        cookie: String,
+        cookie: Arc<String>,
     },
 }
 
