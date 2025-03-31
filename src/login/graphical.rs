@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 
 use tracing::{debug, trace};
 
@@ -10,7 +10,7 @@ use tokio_stream::StreamExt;
 
 use super::*;
 
-/// Creates a new credential from a graphical login
+/// Creates a new session cookie from a graphical login
 ///
 /// Warning: will open a new browser instance, make sure chrome dev tools api is open
 pub async fn login_graphical(
