@@ -125,9 +125,9 @@ pub enum UpdateStrategy {
 // Optional config to enable extraction and download of youtube videos
 #[derive(Debug, Deserialize)]
 pub struct Youtube {
-    path: PathBuf,
-    params: String,
-    parallel_downloads: u32,
+    pub path: PathBuf,
+    pub params: Vec<String>,
+    pub parallel_downloads: u32,
 }
 
 /// Page conversion settings – only one of these should be set.

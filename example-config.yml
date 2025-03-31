@@ -68,7 +68,9 @@ update_strategy: Archive
 # Enables downloading youtube videos (may be removed)
 youtube:
   path: /bin/usr/yt-dlp
-  params: -N 4
+  params:
+    - -N
+    - 4
   parallel_downloads: 2
 
 # How webpages should be saved (only one)

@@ -3,6 +3,7 @@
 
 pub mod raw_file;
 pub mod request;
+pub mod youtube;
 
 use std::path::Path;
 
