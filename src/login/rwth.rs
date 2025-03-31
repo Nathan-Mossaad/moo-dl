@@ -6,6 +6,8 @@ use tracing::{debug, trace};
 use super::*;
 
 /// Creates a new session cookie from an rwth login
+/// 
+/// Based on https://github.com/Romern/syncMyMoodle (Thank you!)
 pub async fn from_rwth(
     instance_url: &Url,
     username: &str,
