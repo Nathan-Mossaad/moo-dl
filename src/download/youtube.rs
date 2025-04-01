@@ -9,20 +9,23 @@ use tokio::process::Command;
 use indicatif::ProgressStyle;
 use tracing::{debug, instrument, trace, Span};
 use tracing_indicatif::span_ext::IndicatifSpanExt;
+use url::Url;
 
 use super::*;
 
-use crate::config::sync_config::Youtube;
+use crate::config::sync_config::{Config, UpdateStrategy, Youtube};
+use crate::update::UpdateState;
 
 impl Youtube {
     /// Downloads a video using yt-dlp and displays a progress bar.
-    /// 
+    /// Provide a folder path instead of a filename, as yt-dlp chooses the file name
+    ///
     /// Don't use directly, use the youtube download queue
     #[instrument(skip(self, url, output_folder))]
-    pub async fn download_video(&self, url: &str, output_folder: &Path) -> Result<()> {
+    async fn force_download_youtube(&self, url: &str, output_folder: &Path) -> Result<()> {
         // Make sure path exists
         ensure_path_exists(output_folder).await?;
-        
+
         let mut cmd = Command::new(&self.path);
         cmd.args(&[
             // Force new lines
@@ -88,6 +91,40 @@ impl Youtube {
         }
 
         Ok(())
+    }
+}
+
+impl Config {
+    /// Same as `force_download_file` but only downloads if file does not exist
+    /// Additionally writes the event to log
+    ///
+    /// Don't use directly, use the youtube download queue
+    pub async fn direct_download_youtube(&self, url: &Url, output_folder: &Path) -> Result<()> {
+        match UpdateStrategy::youtube_check_exists(url, output_folder).await? {
+            UpdateState::Missing => {
+                match &self.youtube {
+                    Some(yt) => {
+                        yt.force_download_youtube(url.as_str(), output_folder)
+                            .await?;
+                        let message_path = output_folder
+                            .to_str()
+                            .ok_or_else(|| anyhow!("Invalid path"))?;
+                        let message = format!("Video: {} with {} ", message_path, url.as_str());
+                        self.status_bar.register_new(&message).await;
+                    }
+                    None => {
+                        self.status_bar.register_skipped().await;
+                    }
+                }
+                // self.status_bar.register_new(message).await;
+                Ok(())
+            }
+            UpdateState::OutOfDate => Err(anyhow!("Impssossible OutOfDate")),
+            UpdateState::UpToDate => {
+                self.status_bar.register_unchanged().await;
+                Ok(())
+            }
+        }
     }
 }
 

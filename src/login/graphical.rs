@@ -1,4 +1,4 @@
-use std::path::{Path};
+use std::path::Path;
 
 use tracing::{debug, trace};
 
@@ -71,7 +71,9 @@ pub async fn login_graphical(
 
     // Get cookie
     let session_cookie;
-    let instance_host = instance_url.host_str().ok_or(anyhow!("Invalid instance url"))?;
+    let instance_host = instance_url
+        .host_str()
+        .ok_or(anyhow!("Invalid instance url"))?;
     let cookie = all_cookies
         .iter()
         .find(|cookie| (&cookie.domain == instance_host) && (cookie.name == "MoodleSession"));
@@ -87,11 +89,9 @@ pub async fn login_graphical(
 
     // We still need to wait, that the browser is fully closed
     browser.wait().await?;
-    
-    Ok(
-        LoginParams {
-            cookie: session_cookie,
-            wstoken,
-        }
-    )
+
+    Ok(LoginParams {
+        cookie: session_cookie,
+        wstoken,
+    })
 }

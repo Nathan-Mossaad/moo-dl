@@ -71,7 +71,7 @@ impl StatusBar {
         info!("{}", entry);
     }
 
-    pub async fn register_new<'a>(&self, message: impl Into<&'a str>) {
+    pub async fn register_new(&self, message: &str) {
         let mut new = self.new.lock().await;
         *new += 1;
         let entry = self.create_log_entry(message, "\x1b[32mNew\x1b[0m: ").await;
