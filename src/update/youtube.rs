@@ -21,18 +21,28 @@ impl UpdateStrategy {
         // Wrap the read_dir stream using tokio_stream.
         let mut entries = ReadDirStream::new(read_dir);
 
+        let mut found_valid_file = false;
+
         while let Some(entry) = entries.next().await {
             let entry = entry?;
-            let file_name = entry.file_name();
-            let file_name = file_name.to_string_lossy();
+            let file_name = entry.file_name().to_string_lossy().to_string();
 
-            // Check if file name contains the video_id and does not end with ".ytdl"
-            if file_name.contains(&video_id) && !file_name.ends_with(".ytdl") {
-                return Ok(UpdateState::UpToDate);
+            // Only consider files that contain the video_id
+            if file_name.contains(&video_id) {
+                if file_name.ends_with(".ytdl") {
+                    // A file with the .ytdl extension was found, so return Missing.
+                    return Ok(UpdateState::Missing);
+                } else {
+                    found_valid_file = true;
+                }
             }
         }
 
-        Ok(UpdateState::Missing)
+        if found_valid_file {
+            Ok(UpdateState::UpToDate)
+        } else {
+            Ok(UpdateState::Missing)
+        }
     }
 }
 

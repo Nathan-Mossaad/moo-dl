@@ -18,7 +18,8 @@ tokio = { version = "1.44", features = [
     "time",
 ] }
 tokio-stream = { version = "0.1", features = ["fs"] }
-#futures = "0.3"
+async-channel = "2.3"
+futures = "0.3"
 
 # Config
 clap = { version = "4.5", features = ["derive"] }

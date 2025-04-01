@@ -9,11 +9,10 @@ use tokio::process::Command;
 use indicatif::ProgressStyle;
 use tracing::{debug, instrument, trace, Span};
 use tracing_indicatif::span_ext::IndicatifSpanExt;
-use url::Url;
 
 use super::*;
 
-use crate::config::sync_config::{Config, UpdateStrategy, Youtube};
+use crate::config::sync_config::{UpdateStrategy, Youtube};
 use crate::update::UpdateState;
 
 impl Youtube {
@@ -99,7 +98,7 @@ impl Config {
     /// Additionally writes the event to log
     ///
     /// Don't use directly, use the youtube download queue
-    pub async fn direct_download_youtube(&self, url: &Url, output_folder: &Path) -> Result<()> {
+    pub(in super) async fn direct_download_youtube(&self, url: &Url, output_folder: &Path) -> Result<()> {
         match UpdateStrategy::youtube_check_exists(url, output_folder).await? {
             UpdateState::Missing => {
                 match &self.youtube {

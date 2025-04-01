@@ -51,8 +51,15 @@ async fn main() -> crate::Result<()> {
         cli::Command::Sync { config_path } => {
             let config = Arc::new(read_config(config_path)?);
             let login_handle = Config::login_thread(config.clone()).await;
+            // Spawn youtube downloader threads
+            let youtube_handle = Config::create_youtube_download_threads(config.clone()).await;
 
             // TODO
+            
+
+            // Allow youtube downloader threads to stop gracefully
+            config.youtube_queue.sender.close();
+            youtube_handle.wait_for_completeion().await;
 
             // Show Status bar
             println!("{}", config.status_bar.get_overview().await);
