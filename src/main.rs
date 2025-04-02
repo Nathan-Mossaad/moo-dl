@@ -56,11 +56,11 @@ async fn main() -> crate::Result<()> {
 
             // TODO
 
-            
-
             // Allow youtube downloader threads to stop gracefully
             config.youtube_queue.sender.close();
-            youtube_handle.wait_for_completeion().await;
+            youtube_handle.wait_for_completion().await;
+            // Start chromium shutdown
+            config.chromium_close().await;
 
             // Stop outputting more messages
             reload_handle
@@ -71,6 +71,9 @@ async fn main() -> crate::Result<()> {
             if let Some(file_path) = &config.log_file {
                 config.status_bar.write_log_to_file(file_path).await?;
             }
+
+            // Wait till chromium is stopped gracefully
+            config.chromium_wait().await;
             // Kill tasks that are no longer needed.
             login_handle.abort();
         }

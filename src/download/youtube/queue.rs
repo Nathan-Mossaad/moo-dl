@@ -49,7 +49,7 @@ impl Config {
 }
 
 impl YoutubeDownloadQueue {
-    pub async fn wait_for_completeion(self) {
+    pub async fn wait_for_completion(self) {
         join_all(self.threads).await;
     }
 }

@@ -1,5 +1,8 @@
+pub mod save_page;
+
 use anyhow::anyhow;
 use tokio::sync::RwLockReadGuard;
+use tracing::{debug, warn};
 
 use web2pdf_lib::{Browser, BrowserWeb2Pdf};
 
@@ -41,7 +44,10 @@ impl Config {
             Some(path) => Browser::web2pdf_launch_from_executable_path(path).await,
         };
         match browser_result {
-            Ok(browser) => *browser_guard = ChromiumState::Browser(browser),
+            Ok(browser) => {
+                debug!("Remote debugging URL: {}", &browser.websocket_address());
+                *browser_guard = ChromiumState::Browser(browser)
+            },
             Err(e) => {
                 let err = anyhow!(e.to_string());
                 self.status_bar
@@ -55,27 +61,60 @@ impl Config {
         if let ChromiumState::Browser(browser) = &*browser_guard {
             let browser_cookies = vec![
                 chromiumoxide::cdp::browser_protocol::network::CookieParam::builder()
-                    .domain(self.get_moodle_url().host_str().expect("This should not be possible, report this: Invalid moodle Url"))
+                    .domain(
+                        self.get_moodle_url()
+                            .host_str()
+                            .expect("This should not be possible, report this: Invalid moodle Url"),
+                    )
                     .name("MoodleSession")
                     .value(cookie.to_string())
                     .source_port(-1)
                     .build()
-                    .expect("This should not be possible, report this: cookieparam error")
+                    .expect("This should not be possible, report this: cookieparam error"),
             ];
             match browser.set_cookies(browser_cookies).await {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(e) => {
                     let err = anyhow!(e.to_string());
                     self.status_bar
-                        .register_err(&err.context("Could not set browser cookie (Webbrowser unavailable)").to_string())
+                        .register_err(
+                            &err.context("Could not set browser cookie (Webbrowser unavailable)")
+                                .to_string(),
+                        )
                         .await;
                     *browser_guard = ChromiumState::Unavailable;
-                },
+                }
             }
         } else {
             panic!("This should not be possible, report this: browser startup error")
         }
+        
 
         browser_guard.downgrade()
+    }
+
+    /// A wrapper around `chromiumoxide::browser::close()`, that only gets only executed, if chromium is actually loaded
+    /// Only run this, if you are sure that nothing is accessing the browser
+    pub async fn chromium_close(&self) {
+        let mut browser_guard = self.chromium.write().await;
+
+        if let ChromiumState::Browser(browser) = &mut *browser_guard {
+            if let Err(e) = browser.close().await {
+                let err = anyhow!(e.to_string());
+                warn!("{}", err.context("Could not stop Chromium"));
+            }
+        }
+    }
+
+    // A wrapper around `chromiumoxide::browser::wait()`, that only gets only executed, if chromium is actually loaded
+    pub async fn chromium_wait(&self) {
+        let mut browser_guard = self.chromium.write().await;
+
+        if let ChromiumState::Browser(browser) = &mut *browser_guard {
+            if let Err(e) = browser.wait().await {
+                let err = anyhow!(e.to_string());
+                warn!("{}", err.context("Could not wait for Chromium stop"));
+            }
+        }
     }
 }
