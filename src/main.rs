@@ -55,6 +55,13 @@ async fn main() -> crate::Result<()> {
             let youtube_handle = Config::create_youtube_download_threads(config.clone()).await;
 
             // TODO
+            let url = url::Url::parse("https://wikipedia.org")?;
+            let file_path = std::path::Path::new("./target/wiki").to_path_buf();
+            config.save_page(&file_path, &url).await?;
+            // let chrome_guard = config.get_chromium().await;
+            // println!("{:?}", chrome_guard);
+            
+            
 
             // Allow youtube downloader threads to stop gracefully
             config.youtube_queue.sender.close();

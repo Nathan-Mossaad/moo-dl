@@ -20,6 +20,7 @@ impl UpdateStrategy {
     /// Check if a file exists
     /// # Returns
     /// UpToDate if file exists
+    /// Missing if not
     pub async fn check_exists(file_path: &Path) -> Result<UpdateState> {
         match fs::metadata(file_path).await {
             Ok(_) => Ok(UpdateState::UpToDate),

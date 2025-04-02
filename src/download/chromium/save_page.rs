@@ -18,19 +18,12 @@ use crate::config::sync_config::{ChromiumState, Config, PageConversion};
 use super::super::*;
 
 impl Config {
-    /// Force create a new website save (don't add file extension to path, as it will be set automatically)
+    /// Force create a new website save
     /// # Returns
     /// true, if page save has been sucessfull
     /// false, if saving pages is unavailable
     #[instrument(skip(self, file_path, url))]
-    pub async fn force_save_page(&self, file_path: &Path, url: &Url) -> Result<bool> {
-        // We need to set the correct file extension
-        let file_path = if let PageConversion::SingleFile(_) = &self.page_conversion {
-            file_path.with_extension("html")
-        } else {
-            file_path.with_extension("pdf")
-        };
-
+    pub(in super) async fn force_save_page(&self, file_path: &Path, url: &Url) -> Result<bool> {
         let mut template = "{spinner:.green} [{elapsed_precise}] Creating page: ".to_string();
         template.push_str(file_path.to_str().unwrap_or("Unknown Filename"));
         Span::current().pb_set_style(&ProgressStyle::default_spinner().template(&template)?);
