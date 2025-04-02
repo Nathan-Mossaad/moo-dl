@@ -3,6 +3,7 @@ mod download;
 mod login;
 mod status_bar;
 mod update;
+mod api;
 
 use std::sync::Arc;
 

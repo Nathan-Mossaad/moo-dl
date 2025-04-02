@@ -9,6 +9,7 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use async_channel::{Receiver, Sender};
+use reqwest::Client;
 use serde::Deserialize;
 use tokio::sync::RwLock;
 use tracing::debug;
@@ -51,6 +52,8 @@ pub struct Config {
     pub file_filters: Option<Vec<String>>,
     #[serde(skip)]
     pub status_bar: Arc<StatusBar>,
+    #[serde(skip, default = "create_standard_client")]
+    pub client: Client,
 }
 
 #[derive(Debug, Deserialize)]
@@ -169,4 +172,14 @@ pub enum PageConversion {
     SinglePage,
     /// Standard chrome pdf conversion
     Standard,
+}
+
+fn create_standard_client() -> Client {
+    // Don't enable cookie provider as it kills performance
+    Client::builder()
+        .gzip(true)
+        .brotli(true)
+        .zstd(true)
+        .deflate(true)
+        .build().expect("Something went catastrophically wron, could not create a reqwest client")
 }
