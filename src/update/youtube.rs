@@ -49,11 +49,23 @@ impl UpdateStrategy {
 /// Extract the YouTube video ID
 fn get_vid_id(url: &Url) -> Option<String> {
     match url.host_str()? {
-        "www.youtube.com" | "youtube.com" => {
-            // For a standard YouTube URL, the video ID is usually provided as a query parameter "v".
-            url.query_pairs()
+        "www.youtube.com" | "youtube.com" | "www.youtube-nocookie.com" | "youtube-nocookie.com" => {
+            // For a standard YouTube URL, try to get the video ID from the query parameter "v".
+            if let Some(video_id) = url
+                .query_pairs()
                 .find(|(key, _)| key == "v")
                 .map(|(_, value)| value.into_owned())
+            {
+                return Some(video_id);
+            }
+            // If not found, see if the URL is an embed URL.
+            let mut segments = url.path_segments()?;
+            if let Some(first_segment) = segments.next() {
+                if first_segment == "embed" {
+                    return segments.next().map(|s| s.to_string());
+                }
+            }
+            None
         }
         "youtu.be" => {
             // For a shortened URL, the video ID is the first segment of the path.
