@@ -4,6 +4,7 @@
 pub mod raw_file;
 pub mod request;
 pub mod youtube;
+pub mod chromium;
 
 use std::path::Path;
 

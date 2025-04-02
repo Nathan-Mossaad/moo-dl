@@ -1384,6 +1384,7 @@ dependencies = [
  "tracing-indicatif",
  "tracing-subscriber",
  "url",
+ "web2pdf_lib",
 ]
 
 [[package]]
@@ -2773,6 +2774,18 @@ checksum = "5a6580f308b1fad9207618087a65c04e7a10bc77e02c8e84e9b00dd4b12fa0bb"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "web2pdf_lib"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53d61aa396e4d6be6065b64670b66154e2711749610f732e489a32cf7390693c"
+dependencies = [
+ "chromiumoxide",
+ "futures",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]

@@ -55,26 +55,27 @@ async fn main() -> crate::Result<()> {
             let youtube_handle = Config::create_youtube_download_threads(config.clone()).await;
 
             // TODO
+
             
 
             // Allow youtube downloader threads to stop gracefully
             config.youtube_queue.sender.close();
             youtube_handle.wait_for_completeion().await;
 
+            // Stop outputting more messages
+            reload_handle
+                .modify(|filter| *filter = EnvFilter::new("off"))
+                .expect("Failed to update the filter");
             // Show Status bar
             println!("{}", config.status_bar.get_overview().await);
             if let Some(file_path) = &config.log_file {
                 config.status_bar.write_log_to_file(file_path).await?;
             }
-            // Stop outputting error messages
-            reload_handle
-                .modify(|filter| *filter = EnvFilter::new("off"))
-                .expect("Failed to update the filter");
             // Kill tasks that are no longer needed.
             login_handle.abort();
         }
         cli::Command::Setup {} => {
-            panic!("TODO: Implement Setup");
+            todo!("TODO: Implement Setup, please create a config manually");
         }
     }
 

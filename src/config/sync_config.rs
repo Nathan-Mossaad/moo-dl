@@ -14,6 +14,8 @@ use tokio::sync::RwLock;
 use tracing::debug;
 use url::Url;
 
+use web2pdf_lib::Browser;
+
 use crate::download::youtube::YoutubeVideo;
 use crate::status_bar::StatusBar;
 use crate::Result;
@@ -38,6 +40,8 @@ pub struct Config {
     pub points: bool,
     pub update_strategy: UpdateStrategy,
     pub chrome_executable: Option<PathBuf>,
+    #[serde(skip, default)]
+    pub chromium: RwLock<ChromiumState>,
     pub youtube: Option<Youtube>,
     #[serde(skip, default = "get_new_queue")]
     pub youtube_queue: YoutubeQueue,
@@ -124,6 +128,14 @@ pub enum UpdateStrategy {
     None,
     Update,
     Archive,
+}
+
+#[derive(Debug, Default)]
+pub enum ChromiumState {
+    #[default]
+    NotStarted,
+    Unavailable,
+    Browser(Browser),
 }
 
 // Optional config to enable extraction and download of youtube videos
