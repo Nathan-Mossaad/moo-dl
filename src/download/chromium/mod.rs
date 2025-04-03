@@ -48,9 +48,12 @@ impl Config {
         let browser_result = match &self.chrome_executable {
             None => Browser::web2pdf_launch().await,
             Some(path) => {
-                debug!("Launching non default chrome executable: {}", path.to_str().unwrap_or("Path unavailable"));
+                debug!(
+                    "Launching non default chrome executable: {}",
+                    path.to_str().unwrap_or("Path unavailable")
+                );
                 Browser::web2pdf_launch_from_executable_path(path).await
-            },
+            }
         };
         match browser_result {
             Ok(browser) => {
@@ -131,7 +134,7 @@ impl Config {
 impl Config {
     /// Same as `force_save_page` but only downloads if file does not exist
     /// Additionally writes the event to log
-    /// 
+    ///
     /// Don't set file extension, it will be generated automatically
     pub async fn save_page(&self, file_path: &Path, url: &Url) -> Result<()> {
         // We need to set the correct file extension
@@ -140,7 +143,7 @@ impl Config {
         } else {
             file_path.with_extension("pdf")
         };
-        
+
         match UpdateStrategy::check_exists(&file_path).await? {
             UpdateState::Missing => {
                 self.force_save_page(&file_path, url).await?;
@@ -158,9 +161,9 @@ impl Config {
 
     /// Same as `download_file` utilises the given time for updating / archiving (if requested)
     /// Additionally writes the event to log
-    /// 
+    ///
     /// Don't set file extension, it will be generated automatically
-   pub async fn save_page_with_timestamp(
+    pub async fn save_page_with_timestamp(
         &self,
         file_path: &Path,
         url: &Url,
@@ -171,8 +174,8 @@ impl Config {
             file_path.with_extension("html")
         } else {
             file_path.with_extension("pdf")
-        };        
-        
+        };
+
         match self
             .update_strategy
             .timestamp_check_up_to_date(&file_path, timestamp)

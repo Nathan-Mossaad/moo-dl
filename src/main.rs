@@ -65,10 +65,9 @@ async fn main() -> crate::Result<()> {
             };
 
             // Start sync
-            // Config::download_courses(config.clone(), &download_path).await;
+            Config::download_courses(config.clone(), &download_path).await;
             
             // TODO: Points
-            let _ = config.get_chromium().await;
             
 
             // Allow youtube downloader threads to stop gracefully
