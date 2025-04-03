@@ -83,6 +83,7 @@ impl Download for Module {
             Module::Quiz(a) => a.download(config, path).await?,
             Module::Lti(a) => a.download(config, path).await?,
             Module::Page(a) => a.download(config, path).await?,
+            Module::Glossary(a) => a.download(config, path).await?,
             // TODO
             _ => {}
         }
