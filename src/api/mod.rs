@@ -104,7 +104,7 @@ fn config_module_of(m: &Module) -> Option<ConfigModule> {
         Module::Pdfannotator(_) => Some(ConfigModule::Pdfannotator),
         Module::Assign(_) => Some(ConfigModule::Assign),
         Module::Label(_) => Some(ConfigModule::Label),
-        Module::Url(_) => Some(ConfigModule::Url),
+        Module::ApiUrl(_) => Some(ConfigModule::Url),
         Module::Page(_) => Some(ConfigModule::Page),
         Module::Quiz(_) => Some(ConfigModule::Quiz),
         Module::Feedback(_) => Some(ConfigModule::Feedback),

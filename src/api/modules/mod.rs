@@ -82,6 +82,7 @@ impl Download for Module {
             Module::Label(a) => a.download(config, path).await?,
             Module::Quiz(a) => a.download(config, path).await?,
             Module::Lti(a) => a.download(config, path).await?,
+            Module::Page(a) => a.download(config, path).await?,
             // TODO
             _ => {}
         }
