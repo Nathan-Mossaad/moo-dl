@@ -76,7 +76,8 @@ pub enum Module {
 impl Download for Module {
     async fn download(&self, config: Arc<Config>, path: &Path) -> Result<()> {
         match &self {
-            Module::Resource(resource) => resource.download(config, path).await?,
+            Module::Resource(a) => a.download(config, path).await?,
+            Module::Folder(a) => a.download(config, path).await?,
             // TODO
             _ => {}
         }
