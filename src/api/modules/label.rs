@@ -9,6 +9,9 @@ pub struct Label {
 
 impl Download for Label {
     async fn download(&self, config: Arc<Config>, path: &Path) -> Result<()> {
+        // Check for youtube vidoes
+        config.queue_youtube_vidoes_extract(&self.description, path.to_owned()).await?;
+        
         let file_name = format!("{}.html", self.name);
         let path = path.join(file_name);
 

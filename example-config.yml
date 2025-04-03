@@ -52,9 +52,10 @@ modules:
   - Vpl
   # Currently Lti is equivalent to opencast
   - Lti
+  - Grouptool
+  # Saving forums is currently not supported and not any time soon
   - Forum
   - Hsuforum
-  - Grouptool
 
 # Enables saving points
 points: true
