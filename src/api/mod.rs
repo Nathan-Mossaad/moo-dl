@@ -2,10 +2,13 @@
 #![allow(dead_code)]
 
 // Everthing from here on out should start with api_
-mod helpers;
+pub mod helpers;
+pub mod modules;
 mod rest;
 
 use std::path::{Path, PathBuf};
+use std::fmt::Debug;
+use std::sync::Arc;
 
 use serde::Deserialize;
 use tracing::debug;
@@ -13,6 +16,10 @@ use tracing::debug;
 use crate::config::sync_config::Config;
 
 use crate::Result;
+
+pub trait Download: Debug {
+    async fn download(&self, config: Arc<Config>, path: &Path) -> Result<()>;
+}
 
 impl Config {
     /// Generic function to make a rest api request
