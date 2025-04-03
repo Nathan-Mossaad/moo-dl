@@ -1,5 +1,8 @@
+use std::str::FromStr;
+
 use regex::Regex;
 use tracing::warn;
+use url::Url;
 
 use super::*;
 
@@ -87,9 +90,35 @@ impl Download for ContentFile {
 
 impl Download for ContentUrl {
     async fn download(&self, config: Arc<Config>, path: &Path) -> Result<()> {
-        // let file_path = path.join(&self.filename);
-        // TODO
-        tracing::error!("Implement Download for ContentUrl");
+        // Check for youtube vidoes
+        config.queue_youtube_vidoes_extract(&self.fileurl, path.to_owned()).await?;
+        
+        // Create .html, that redirects to the url
+        let redirect_path = path.join(format!("{}.html", &self.filename));
+        let redirect_content = format!(
+            r###"<!DOCTYPE html>
+                <html>
+                <head>
+                    <meta http-equiv="refresh" content="0;url={}">
+                    <title>Redirecting...</title>
+                </head>
+                <body>
+                    <p>If you are not redirected automatically, <a href="{}">click here</a>.</p>
+                </body>
+                </html>"###,
+            &self.fileurl, &self.fileurl
+        );
+        config
+            .write_file_contents(&redirect_path, &redirect_content)
+            .await?;
+        
+        // Additionally save webpage
+        let file_path = path.join(&self.filename);
+        config.save_page(
+            &file_path,
+            &Url::from_str(&self.fileurl)?,
+        )
+        .await?;
         Ok(())
     }
 }
