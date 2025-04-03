@@ -3,6 +3,7 @@ use super::*;
 // content_types, that are subtypes from modules
 mod content_types;
 // modules
+mod apiurl;
 mod assign;
 mod feedback;
 mod folder;
@@ -16,10 +17,10 @@ mod page;
 mod pdfannotator;
 mod quiz;
 mod resource;
-mod url;
 mod vpl;
 
 // Reexport
+use apiurl::*;
 use assign::*;
 use feedback::*;
 use folder::*;
@@ -33,7 +34,6 @@ use page::*;
 use pdfannotator::*;
 use quiz::*;
 use resource::*;
-use url::*;
 use vpl::*;
 
 #[derive(Debug, Deserialize)]
@@ -50,7 +50,7 @@ pub enum Module {
     #[serde(rename = "label")]
     Label(Label),
     #[serde(rename = "url")]
-    Url(Url),
+    Url(ApiUrl),
     #[serde(rename = "page")]
     Page(Page),
     #[serde(rename = "quiz")]
@@ -71,4 +71,15 @@ pub enum Module {
     Grouptool(Grouptool),
     #[serde(other)]
     Unknown,
+}
+
+impl Download for Module {
+    async fn download(&self, config: Arc<Config>, path: &Path) -> Result<()> {
+        match &self {
+            Module::Resource(resource) => resource.download(config, path).await?,
+            // TODO
+            _ => {}
+        }
+        Ok(())
+    }
 }

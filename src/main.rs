@@ -1,9 +1,10 @@
+mod api;
 mod config;
 mod download;
 mod login;
 mod status_bar;
+mod sync;
 mod update;
-mod api;
 
 use std::sync::Arc;
 
@@ -50,13 +51,23 @@ async fn main() -> crate::Result<()> {
 
     match cli.command {
         cli::Command::Sync { config_path } => {
-            let config = Arc::new(read_config(config_path)?);
+            let config = Arc::new(read_config(&config_path)?);
+            // Start Login
             let login_handle = Config::login_thread(config.clone()).await;
             // Spawn youtube downloader threads
             let youtube_handle = Config::create_youtube_download_threads(config.clone()).await;
 
-            // TODO
+            // Get download path
+            let download_path = match &config.dir {
+                // We can safely unwrap, as the config can't be at /
+                Some(path) => &config_path.parent().unwrap().join(path),
+                None => config_path.parent().unwrap(),
+            };
+
+            // Start sync
+            Config::download_courses(config.clone(), &download_path).await;
             
+            // TODO: Points
             
             
 

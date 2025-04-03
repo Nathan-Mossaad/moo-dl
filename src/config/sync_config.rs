@@ -101,8 +101,8 @@ pub enum LoginState {
 /// Course configuration (currently only room_id is provided).
 #[derive(Debug, Deserialize)]
 pub struct Course {
-    id: u64,
-    name: String,
+    pub id: u64,
+    pub name: String,
 }
 
 // List of supported modules
