@@ -5,6 +5,8 @@
 mod helpers;
 mod rest;
 
+use std::path::{Path, PathBuf};
+
 use serde::Deserialize;
 use tracing::debug;
 
@@ -40,4 +42,11 @@ impl Config {
             .await?;
         Ok(serde_json::from_str(&response.text().await?)?)
     }
+}
+
+/// Assemble a file path from the `api_filepath`, as provided by the api
+pub fn assemble_path(path: &Path, api_filepath: &str, filename: &str) -> PathBuf {
+    let custom_path = api_filepath.strip_prefix('/').unwrap_or(api_filepath);
+
+    path.join(custom_path).join(filename)
 }

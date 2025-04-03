@@ -181,5 +181,5 @@ fn create_standard_client() -> Client {
         .brotli(true)
         .zstd(true)
         .deflate(true)
-        .build().expect("Something went catastrophically wron, could not create a reqwest client")
+        .build().expect("Something went catastrophically wrong, could not create a reqwest client")
 }
