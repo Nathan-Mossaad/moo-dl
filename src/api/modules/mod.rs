@@ -50,7 +50,7 @@ pub enum Module {
     #[serde(rename = "label")]
     Label(Label),
     #[serde(rename = "url")]
-    Url(ApiUrl),
+    ApiUrl(ApiUrl),
     #[serde(rename = "page")]
     Page(Page),
     #[serde(rename = "quiz")]
@@ -77,6 +77,7 @@ impl Download for Module {
     async fn download(&self, config: Arc<Config>, path: &Path) -> Result<()> {
         match &self {
             Module::Resource(a) => a.download(config, path).await?,
+            Module::ApiUrl(a) => a.download(config, path).await?,
             Module::Folder(a) => a.download(config, path).await?,
             Module::Label(a) => a.download(config, path).await?,
             Module::Quiz(a) => a.download(config, path).await?,
