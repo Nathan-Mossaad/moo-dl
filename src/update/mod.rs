@@ -1,4 +1,4 @@
-pub mod file;
+pub mod raw_file;
 pub mod timestamp;
 pub mod youtube;
 

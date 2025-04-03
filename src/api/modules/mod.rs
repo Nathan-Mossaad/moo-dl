@@ -78,6 +78,7 @@ impl Download for Module {
         match &self {
             Module::Resource(a) => a.download(config, path).await?,
             Module::Folder(a) => a.download(config, path).await?,
+            Module::Label(a) => a.download(config, path).await?,
             // TODO
             _ => {}
         }
