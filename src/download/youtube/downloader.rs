@@ -1,4 +1,3 @@
-use std::path::Path;
 use std::process::Stdio;
 
 use anyhow::{anyhow, Context};
@@ -20,10 +19,14 @@ impl Youtube {
     /// Provide a folder path instead of a filename, as yt-dlp chooses the file name
     ///
     /// Don't use directly, use the youtube download queue
-    #[instrument(skip(self, url, output_folder))]
-    async fn force_download_youtube(&self, url: &str, output_folder: &Path) -> Result<()> {
+    #[instrument(skip(self, url, output))]
+    async fn force_download_youtube(&self, url: &str, output: &OutputType) -> Result<()> {
         // Make sure path exists
-        ensure_path_exists(output_folder).await?;
+        ensure_path_exists(output.path()).await?;
+        let ouput_path = match &output {
+            OutputType::Folder(path_buf) => &path_buf.join("%(title)s [%(id)s].%(ext)s"),
+            OutputType::File(path_buf) => path_buf,
+        };
 
         let mut cmd = Command::new(&self.path);
         cmd.args(&[
@@ -37,14 +40,9 @@ impl Youtube {
             "no_color",
         ])
         .args(&self.params)
-        // Set output folder
+        // Set output
         .arg("-o")
-        .arg(
-            output_folder
-                .join("%(title)s [%(id)s].%(ext)s")
-                .to_str()
-                .context("Invalid output path")?,
-        )
+        .arg(ouput_path.to_str().context("Invalid output path")?)
         .arg(url);
 
         debug!("yt-dlp params: {:?}", cmd);
@@ -57,8 +55,13 @@ impl Youtube {
             .context("Failed to start yt-dlp")?;
 
         // Prepare template
-        let mut template = "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {percent:.1f} ({eta})  Video: ".to_string();
-        template.push_str(url);
+        let mut template = "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {percent:.1f}% ({eta})  Video: ".to_string();
+        template.push_str(ouput_path.to_str().unwrap_or("Unknown file"));
+        if let OutputType::Folder(_) = output {
+            template.push_str(" Url: ");
+            template.push_str(url);
+        }
+
         Span::current().pb_set_style(
             &ProgressStyle::default_bar()
                 .template(&template)?
@@ -98,14 +101,18 @@ impl Config {
     /// Additionally writes the event to log
     ///
     /// Don't use directly, use the youtube download queue
-    pub(in super) async fn direct_download_youtube(&self, url: &Url, output_folder: &Path) -> Result<()> {
-        match UpdateStrategy::youtube_check_exists(url, output_folder).await? {
+    pub(super) async fn direct_download_youtube(
+        &self,
+        url: &Url,
+        output: &OutputType,
+    ) -> Result<()> {
+        match UpdateStrategy::youtube_check_exists(url, output).await? {
             UpdateState::Missing => {
                 match &self.youtube {
                     Some(yt) => {
-                        yt.force_download_youtube(url.as_str(), output_folder)
-                            .await?;
-                        let message_path = output_folder
+                        yt.force_download_youtube(url.as_str(), output).await?;
+                        let message_path = output
+                            .path()
                             .to_str()
                             .ok_or_else(|| anyhow!("Invalid path"))?;
                         let message = format!("Video: {} with {} ", message_path, url.as_str());
@@ -115,7 +122,6 @@ impl Config {
                         self.status_bar.register_skipped().await;
                     }
                 }
-                // self.status_bar.register_new(message).await;
                 Ok(())
             }
             UpdateState::OutOfDate => Err(anyhow!("Impssossible OutOfDate")),
@@ -157,7 +163,7 @@ impl PercentStrExtractor {
 
             trace!("Extracted percentage: {}", percent_string);
             self.percentage = match percent_string.parse() {
-                Ok(val) => val,
+                Ok(val) => self.percentage.max(val),
                 Err(_) => return,
             };
         } else {

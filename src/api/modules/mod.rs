@@ -80,6 +80,7 @@ impl Download for Module {
             Module::Folder(a) => a.download(config, path).await?,
             Module::Label(a) => a.download(config, path).await?,
             Module::Quiz(a) => a.download(config, path).await?,
+            Module::Lti(a) => a.download(config, path).await?,
             // TODO
             _ => {}
         }

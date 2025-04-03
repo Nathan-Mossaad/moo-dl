@@ -50,7 +50,7 @@ modules:
   - Feedback
   - Glossary
   - Vpl
-  # Currently Lti is equivalent to opencast
+  # Currently Lti is equivalent to opencast (which requires youtube to be enabled)
   - Lti
   - Grouptool
   # Saving forums is currently not supported and not any time soon

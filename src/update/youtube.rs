@@ -2,12 +2,20 @@ use anyhow::anyhow;
 use tokio_stream::{wrappers::ReadDirStream, StreamExt};
 use url::Url;
 
+use crate::download::youtube::OutputType;
+
 use super::*;
 
 impl UpdateStrategy {
     /// Checks if the provided youtube video has already been downloaded in the folder
     /// Provide a folder path instead of a filename, as yt-dlp chooses the file name
-    pub async fn youtube_check_exists(url: &Url, dir: &Path) -> Result<UpdateState> {
+    pub async fn youtube_check_exists(url: &Url, output: &OutputType) -> Result<UpdateState> {
+        // Check if we have a given name
+        let dir = match output {
+            OutputType::Folder(path_buf) => path_buf,
+            OutputType::File(path_buf) => return UpdateStrategy::check_exists(&path_buf).await,
+        };
+        
         let video_id = format!(
             "[{}]",
             get_vid_id(url).ok_or(anyhow!("Could not extract youtube video id"))?

@@ -14,7 +14,7 @@ impl Config {
     async fn download_thread(&self) {
         while let Ok(vid) = self.youtube_queue.receiver.recv().await {
             if let Err(e) = self
-                .direct_download_youtube(&vid.url, &vid.output_folder)
+                .direct_download_youtube(&vid.url, &vid.output)
                 .await
             {
                 let context = format!("Failed to download video {}", vid.url.as_str());
@@ -42,8 +42,8 @@ impl Config {
         youtube_download_queue
     }
 
-    pub async fn queue_youtube_video(&self, url: Url, output_folder: PathBuf) -> Result<()> {
-        let youtube_vid = Arc::new(YoutubeVideo { url, output_folder });
+    pub async fn queue_youtube_video(&self, url: Url, output: OutputType) -> Result<()> {
+        let youtube_vid = Arc::new(YoutubeVideo { url, output });
         self.youtube_queue.sender.send(youtube_vid).await?;
         Ok(())
     }
@@ -65,7 +65,7 @@ impl Config {
                 if let Ok(parsed_url) = Url::parse(url_value) {
                     tracing::trace!("Invalid URL: {:?}", &parsed_url);
                     // Clone output_folder for each async call.
-                    self.queue_youtube_video(parsed_url, output_folder.clone()).await?;
+                    self.queue_youtube_video(parsed_url, OutputType::Folder(output_folder.clone())).await?;
                 } else {
                     
                 }
