@@ -87,6 +87,7 @@ impl Download for Module {
             Module::Vpl(a) => a.download(config, path).await?,
             Module::Assign(a) => a.download(config, path).await?,
             Module::Pdfannotator(a) => a.download(config, path).await?,
+            Module::Grouptool(a) => a.download(config, path).await?,
             // TODO
             _ => {}
         }
