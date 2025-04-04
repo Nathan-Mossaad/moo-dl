@@ -30,6 +30,8 @@ login:
   # totp_secret: totpsecret
 
 # Courses
+# You get get the course ids by opening the course in your webbrowser with the id being the number after "id="
+# Example The id in "https://moodle.example/course/view.php?id=1234" is "1234"
 courses:
   - id: 12345
     name: math
