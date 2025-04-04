@@ -59,7 +59,7 @@ impl Config {
             ])
             .await?)
     }
-    
+
     pub(super) async fn mod_assign_get_submission_status(
         &self,
         assignid: u64,
@@ -70,5 +70,31 @@ impl Config {
                 ("assignid", &assignid.to_string()),
             ])
             .await?)
+    }
+
+    pub(super) async fn gradereport_user_get_grades_table(&self, course_id: u64) -> Result<String> {
+        debug!(
+            "Get gradereport_user_get_grades_table for id: {}",
+            course_id
+        );
+        let response = self
+            .client
+            .get(format!(
+                "{}/webservice/rest/server.php",
+                self.get_moodle_url()
+            ))
+            .query(&[
+                ("moodlewsrestformat", "json"),
+                ("moodlewssettingraw", "false"),
+                ("moodlewssettingfileurl", "true"),
+                ("moodlewssettingfilter", "true"),
+                ("wstoken", self.wstoken.as_str()),
+                ("wsfunction", "gradereport_user_get_grades_table"),
+                ("courseid", &course_id.to_string()),
+                ("userid", &self.user_id.to_string()),
+            ])
+            .send()
+            .await?;
+        Ok(response.text().await?)
     }
 }

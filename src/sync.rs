@@ -10,7 +10,15 @@ use super::*;
 impl Config {
     async fn download_course(config: Arc<Config>, path: &Path, course: &Course) -> Result<()> {
         let path = path.join(&course.name);
-        // We create a new Arc for each Course to reduce the number of threads accessing the same Arc
+      
+        let grade_config = config.clone(); 
+        let grade_path = path.clone();
+        let grade_course_id = course.id;
+        let grade_handle = tokio::spawn(
+            async move {
+                grade_config.save_grades_table(&grade_path, grade_course_id).await;
+        });
+
         let context = format!("Failed getting course elements! Course: {}", &course.name);
         
         let course_elements = config
@@ -20,8 +28,13 @@ impl Config {
 
         // Create a task for each content
         let tasks = course_elements.iter().map(|r| r.download(config.clone(), &path));
+        let res = join_all(tasks).await;
+        
+        // Wait for grades to be saved
+        let _ = grade_handle.await;
+        
         // Return an error if one occured
-        for res in join_all(tasks).await {
+        for res in res {
             let context = format!("Failure in course: {}", course.id);
             res.context(context)?;
         }

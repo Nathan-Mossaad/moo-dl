@@ -54,16 +54,16 @@ impl Config {
                 );
                 Browser::web2pdf_launch_from_executable_path(path).await
             }
-        };
+        }.map_err(|e| anyhow!(e.to_string()));
         match browser_result {
             Ok(browser) => {
                 debug!("Remote debugging URL: {}", &browser.websocket_address());
                 *browser_guard = ChromiumState::Browser(browser)
             }
             Err(e) => {
-                let err = anyhow!(e.to_string());
+                let err = anyhow!(e.to_string()).context("Could not launch browser").to_string();
                 self.status_bar
-                    .register_err(&err.context("Could not launch browser").to_string())
+                    .register_err(&err)
                     .await;
                 *browser_guard = ChromiumState::Unavailable;
             }

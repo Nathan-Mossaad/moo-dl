@@ -33,12 +33,13 @@ pub fn read_config<P: AsRef<Path>>(path: P) -> Result<Config> {
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub wstoken: String,
+    pub user_id: String,
     pub login: Login,
     #[serde(skip)]
     pub cookie: Arc<RwLock<LoginState>>,
     pub courses: Vec<Course>,
     pub modules: HashSet<Module>,
-    pub points: bool,
+    pub grades: bool,
     pub update_strategy: UpdateStrategy,
     pub chrome_executable: Option<PathBuf>,
     #[serde(skip, default)]

@@ -1,5 +1,7 @@
 # Token for API
 wstoken: wstoken
+# Your moodle user id (needed for some operations)
+user_id: 1234
 
 # Login parameters
 # Use only one of "api_only / raw / username_passwd / graphical / rwth" is supported
@@ -58,8 +60,8 @@ modules:
   - Forum
   - Hsuforum
 
-# Enables saving points
-points: true
+# Enables saving grades
+grades: true
 
 # One of keep "None / Update / Archive"
 update_strategy: Archive

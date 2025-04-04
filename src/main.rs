@@ -66,9 +66,6 @@ async fn main() -> crate::Result<()> {
 
             // Start sync
             Config::download_courses(config.clone(), &download_path).await;
-            
-            // TODO: Points
-            
 
             // Allow youtube downloader threads to stop gracefully
             config.youtube_queue.sender.close();
