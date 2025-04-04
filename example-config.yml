@@ -47,12 +47,13 @@ modules:
   - Url
   - Page
   - Quiz
-  - Feedback
   - Glossary
   - Vpl
   # Currently Lti is equivalent to opencast (which requires youtube to be enabled)
   - Lti
   - Grouptool
+  # Saving feedbacks is currently not supported and not any time soon
+  - Feedback
   # Saving forums is currently not supported and not any time soon
   - Forum
   - Hsuforum
