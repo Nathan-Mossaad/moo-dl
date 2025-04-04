@@ -1,7 +1,3 @@
-use std::str::FromStr;
-
-use url::Url;
-
 use super::*;
 
 #[derive(Debug, Deserialize)]
