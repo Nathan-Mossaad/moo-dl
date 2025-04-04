@@ -1,7 +1,7 @@
 use super::*;
 
 // content_types, that are subtypes from modules
-mod content_types;
+pub(super) mod content_types;
 // modules
 mod apiurl;
 mod assign;

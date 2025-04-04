@@ -7,6 +7,7 @@ use super::*;
 #[derive(Debug, Deserialize)]
 pub struct Assign {
     pub id: u64,
+    pub instance: u64,
     pub name: String,
     pub url: String,
     pub description: Option<String>,
@@ -16,8 +17,23 @@ impl Download for Assign {
         let path = path.join(&self.name);
         // Assignments don't provide most of their information via core_course_get_contents
         // Therefore we need to use mod_assign_get_submission_status instead
-        // TODO: use: mod_assign_get_submission_status
-        tracing::warn!("TODO: implement assign!");
+        match config.mod_assign_get_submission_status(self.instance).await {
+            Ok(assignment) => {
+                assignment.download(config.clone(), &path).await?;
+            }
+            Err(e) => {
+                config
+                    .status_bar
+                    .register_err(
+                        &e.context(format!(
+                            "Failed checking assignment: url: {} instance: {} (This is most likely a deserialization issue)",
+                            &self.url, &self.instance,
+                        ))
+                        .to_string(),
+                    )
+                    .await
+            }
+        }
 
         // We still want to save the overview (if available) (With full archiving support!)
         if let Some(hidden_html_contents) = &self.description {

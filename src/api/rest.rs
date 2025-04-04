@@ -1,4 +1,4 @@
-use super::{modules::Module, *};
+use super::{assign_submission::ModAssignGetSubmissionStatus, modules::Module, *};
 
 // Descriptions taken from generated moodle docs these can be accessed on any moodle instance with administrator rights via: http://example.com/admin/webservice/documentation.php
 #[derive(Debug, Deserialize)]
@@ -56,6 +56,18 @@ impl Config {
             .api_request_json::<Vec<CoreCourseGetContentsElement>>(&[
                 ("wsfunction", "core_course_get_contents"),
                 ("courseid", &course_id.to_string()),
+            ])
+            .await?)
+    }
+    
+    pub(super) async fn mod_assign_get_submission_status(
+        &self,
+        assignid: u64,
+    ) -> Result<ModAssignGetSubmissionStatus> {
+        Ok(self
+            .api_request_json::<ModAssignGetSubmissionStatus>(&[
+                ("wsfunction", "mod_assign_get_submission_status"),
+                ("assignid", &assignid.to_string()),
             ])
             .await?)
     }
