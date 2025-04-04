@@ -66,6 +66,9 @@ pub fn assemble_path(path: &Path, api_filepath: &str, filename: &str) -> PathBuf
 impl Download for CoreCourseGetContentsElement {
     // Downloads only the elements, that are requested in regards to the config
     async fn download(&self, config: Arc<Config>, path: &Path) -> Result<()> {
+        // Respect course element names
+        let path = path.join(&self.name);
+
         // Create a task for each element
         let (skip_count, tasks): (u32, Vec<_>) =
             self.modules
@@ -73,7 +76,7 @@ impl Download for CoreCourseGetContentsElement {
                 .fold((0, Vec::new()), |(mut skip_count, mut tasks), module| {
                     if let Some(cfg_module) = config_module_of(module) {
                         if config.modules.contains(&cfg_module) {
-                            tasks.push(module.download(config.clone(), path));
+                            tasks.push(module.download(config.clone(), &path));
                         } else {
                             skip_count += 1;
                         }
