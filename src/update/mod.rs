@@ -31,7 +31,7 @@ impl UpdateStrategy {
 }
 
 /// Archives a file by appending its modified date to the file name.
-async fn archive_file(file_path: &Path) -> Result<()> {
+pub async fn archive_file(file_path: &Path) -> Result<()> {
     // Returns if file is not found, or modate is not valid
     let file_time = fs::metadata(&file_path)
         .await?

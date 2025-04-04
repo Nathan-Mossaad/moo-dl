@@ -9,10 +9,10 @@ use web2pdf_lib::{Browser, BrowserWeb2Pdf};
 
 use crate::{
     config::sync_config::{ChromiumState, Config, PageConversion, UpdateStrategy},
-    update::{timestamp::set_file_creation, UpdateState},
+    update::{archive_file, timestamp::set_file_creation, UpdateState},
 };
 
-use super::*;
+use super::{raw_file::force_write_file_contents, *};
 
 impl Config {
     /// Get's the currently loaded browser from the config, will attempt to start a browser if there has been no previous attempt
@@ -195,6 +195,69 @@ impl Config {
 
                 let message = file_path.to_str().ok_or_else(|| anyhow!("Invalid path"))?;
                 self.status_bar.register_updated(message).await;
+                Ok(())
+            }
+            UpdateState::UpToDate => {
+                self.status_bar.register_unchanged().await;
+                Ok(())
+            }
+        }
+    }
+
+    /// Same as `download_file` utilises a second txt file for updating / archiving (if requested)
+    /// Additionally writes the event to log
+    ///
+    /// Don't set file extension, it will be generated automatically
+    pub async fn save_page_with_extra_file(
+        &self,
+        page_path: &Path,
+        url: &Url,
+        hidden_file_path: &Path,
+        hidden_file_contents: &str,
+    ) -> Result<()> {
+        // We need to set the correct file extension
+        let page_path = if let PageConversion::SingleFile(_) = &self.page_conversion {
+            page_path.with_extension("html")
+        } else {
+            page_path.with_extension("pdf")
+        };
+
+        match self
+            .update_strategy
+            .file_check_up_to_date(hidden_file_path, hidden_file_contents)
+            .await?
+        {
+            UpdateState::Missing => {
+                self.force_save_page(&page_path, url).await?;
+                force_write_file_contents(hidden_file_path, hidden_file_contents).await?;
+
+                let message = page_path.to_str().ok_or_else(|| anyhow!("Invalid path"))?;
+                self.status_bar.register_new(message).await;
+                Ok(())
+            }
+            UpdateState::OutOfDate => {
+                // We have to consider the file extension to have changed since the last time
+                match UpdateStrategy::check_exists(&page_path).await? {
+                    UpdateState::Missing => {
+                        // We can treat this like missing
+                        self.force_save_page(&page_path, url).await?;
+                        force_write_file_contents(hidden_file_path, hidden_file_contents).await?;
+
+                        let message = page_path.to_str().ok_or_else(|| anyhow!("Invalid path"))?;
+                        self.status_bar.register_new(message).await;
+                    }
+                    UpdateState::OutOfDate => Err(anyhow!("Impssossible OutOfDate"))?,
+                    UpdateState::UpToDate => {
+                        // We have to archive and resave
+                        archive_file(&page_path).await?;
+                        
+                        self.force_save_page(&page_path, url).await?;
+                        force_write_file_contents(hidden_file_path, hidden_file_contents).await?;
+
+                        let message = page_path.to_str().ok_or_else(|| anyhow!("Invalid path"))?;
+                        self.status_bar.register_updated(message).await;
+                    }
+                }
                 Ok(())
             }
             UpdateState::UpToDate => {

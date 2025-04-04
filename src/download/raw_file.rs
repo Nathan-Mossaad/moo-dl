@@ -6,7 +6,7 @@ use crate::{config::sync_config::Config, update::UpdateState};
 use super::*;
 
 /// Write content to file (may overwrite)
-async fn force_write_file_contents(file_path: &Path, new_content: &str) -> Result<()> {
+pub(super) async fn force_write_file_contents(file_path: &Path, new_content: &str) -> Result<()> {
     // Make sure path exists
     ensure_path_exists(file_path).await?;
 

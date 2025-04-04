@@ -85,6 +85,7 @@ impl Download for Module {
             Module::Page(a) => a.download(config, path).await?,
             Module::Glossary(a) => a.download(config, path).await?,
             Module::Vpl(a) => a.download(config, path).await?,
+            Module::Assign(a) => a.download(config, path).await?,
             // TODO
             _ => {}
         }
