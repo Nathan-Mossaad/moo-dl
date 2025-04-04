@@ -11,11 +11,12 @@ impl Config {
     async fn download_course(config: Arc<Config>, path: &Path, course: &Course) -> Result<()> {
         let path = path.join(&course.name);
         // We create a new Arc for each Course to reduce the number of threads accessing the same Arc
-
+        let context = format!("Failed getting course elements! Course: {}", &course.name);
+        
         let course_elements = config
             .api_core_course_get_contents(course.id)
             .await
-            .context("Failed getting course elements!")?;
+            .context(context)?;
 
         // Create a task for each content
         let tasks = course_elements.iter().map(|r| r.download(config.clone(), &path));
