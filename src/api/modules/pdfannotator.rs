@@ -9,7 +9,7 @@ impl Download for Pdfannotator {
     async fn download(&self, config: Arc<Config>, path: &Path) -> Result<()> {
         // Not needed, as we usually have only one file (could be changed in the future)
         // let path = path.join(&self.name);
-        
+
         if let Some(contents) = &self.contents {
             // Create a task for each content
             let tasks = contents

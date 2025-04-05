@@ -1,7 +1,7 @@
 // Everthing from here on out should start with api_
+pub mod assign_submission;
 pub mod helpers;
 pub mod modules;
-pub mod assign_submission;
 mod rest;
 
 use std::fmt::Debug;

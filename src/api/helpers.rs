@@ -8,9 +8,7 @@ impl Config {
     }
 
     /// Get the users' currently enrolled courses
-    pub async fn api_acquire_users_courses(
-        &self,
-    ) -> Result<Vec<CoreEnrolGetUsersCourses>> {
+    pub async fn api_acquire_users_courses(&self) -> Result<Vec<CoreEnrolGetUsersCourses>> {
         let courses = self.core_enrol_get_users_courses().await?;
         Ok(courses)
     }

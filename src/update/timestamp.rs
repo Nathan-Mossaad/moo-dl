@@ -32,10 +32,16 @@ impl UpdateStrategy {
     /// (Respects the setting in Update Strategy)
     ///
     /// May move the file in case of archive or expects the user to overwrite the file in case of update
-    pub async fn timestamp_check_up_to_date(&self, file_path: &Path, timestamp: u64) -> Result<UpdateState> {
+    pub async fn timestamp_check_up_to_date(
+        &self,
+        file_path: &Path,
+        timestamp: u64,
+    ) -> Result<UpdateState> {
         match self {
             UpdateStrategy::None => UpdateStrategy::check_exists(file_path).await,
-            UpdateStrategy::Update => UpdateStrategy::timestamp_check_file_date(file_path, timestamp).await,
+            UpdateStrategy::Update => {
+                UpdateStrategy::timestamp_check_file_date(file_path, timestamp).await
+            }
             UpdateStrategy::Archive => {
                 let state = UpdateStrategy::timestamp_check_file_date(file_path, timestamp).await?;
                 if state == UpdateState::OutOfDate {

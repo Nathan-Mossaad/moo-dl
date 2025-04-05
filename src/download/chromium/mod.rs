@@ -54,17 +54,18 @@ impl Config {
                 );
                 Browser::web2pdf_launch_from_executable_path(path).await
             }
-        }.map_err(|e| anyhow!(e.to_string()));
+        }
+        .map_err(|e| anyhow!(e.to_string()));
         match browser_result {
             Ok(browser) => {
                 debug!("Remote debugging URL: {}", &browser.websocket_address());
                 *browser_guard = ChromiumState::Browser(browser)
             }
             Err(e) => {
-                let err = anyhow!(e.to_string()).context("Could not launch browser").to_string();
-                self.status_bar
-                    .register_err(&err)
-                    .await;
+                let err = anyhow!(e.to_string())
+                    .context("Could not launch browser")
+                    .to_string();
+                self.status_bar.register_err(&err).await;
                 *browser_guard = ChromiumState::Unavailable;
             }
         }
@@ -250,7 +251,7 @@ impl Config {
                     UpdateState::UpToDate => {
                         // We have to archive and resave
                         archive_file(&page_path).await?;
-                        
+
                         self.force_save_page(&page_path, url).await?;
                         force_write_file_contents(hidden_file_path, hidden_file_contents).await?;
 

@@ -111,7 +111,10 @@ courses:
 "#,
     );
     for course in courses {
-        conf.push_str(&format!("  - id: {}\n    name: {}\n", course.id, course.shortname));
+        conf.push_str(&format!(
+            "  - id: {}\n    name: {}\n",
+            course.id, course.shortname
+        ));
     }
 
     conf.push_str(

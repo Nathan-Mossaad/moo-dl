@@ -91,8 +91,10 @@ impl Download for ContentFile {
 impl Download for ContentUrl {
     async fn download(&self, config: Arc<Config>, path: &Path) -> Result<()> {
         // Check for youtube vidoes
-        config.queue_youtube_vidoes_extract(&self.fileurl, path.to_owned()).await?;
-        
+        config
+            .queue_youtube_vidoes_extract(&self.fileurl, path.to_owned())
+            .await?;
+
         // Create .html, that redirects to the url
         let redirect_path = path.join(format!("{}.html", &self.filename));
         let redirect_content = format!(
@@ -111,15 +113,16 @@ impl Download for ContentUrl {
         config
             .write_file_contents(&redirect_path, &redirect_content)
             .await?;
-        
+
         // Additionally save webpage
         let file_path = path.join(&self.filename);
-        config.save_page_with_timestamp(
-            &file_path,
-            &Url::from_str(&self.fileurl)?,
-            self.timemodified,
-        )
-        .await?;
+        config
+            .save_page_with_timestamp(
+                &file_path,
+                &Url::from_str(&self.fileurl)?,
+                self.timemodified,
+            )
+            .await?;
         Ok(())
     }
 }

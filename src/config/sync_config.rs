@@ -170,7 +170,6 @@ impl Default for YoutubeQueue {
     }
 }
 
-
 /// Page conversion settings – only one of these should be set.
 #[derive(Debug, Deserialize, Default)]
 #[serde(tag = "type", content = "path")]
@@ -191,5 +190,6 @@ fn create_standard_client() -> Client {
         .brotli(true)
         .zstd(true)
         .deflate(true)
-        .build().expect("Something went catastrophically wrong, could not create a reqwest client")
+        .build()
+        .expect("Something went catastrophically wrong, could not create a reqwest client")
 }

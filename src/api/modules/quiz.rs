@@ -24,8 +24,8 @@ impl Download for Quiz {
             Some(cookie) => cookie,
             None => {
                 config.status_bar.register_skipped().await;
-                return Ok(())
-            },
+                return Ok(());
+            }
         };
         trace!(
             "Attempting to get available quiz attempts for quiz id: {} name: {}",
@@ -36,13 +36,10 @@ impl Download for Quiz {
         let response = config
             .client
             .get(&self.url)
-            .header(
-                "Cookie",
-                "MoodleSession=".to_string() + &cookie,
-            )
+            .header("Cookie", "MoodleSession=".to_string() + &cookie)
             .send()
             .await?;
-        
+
         let html = response.text().await?;
         let document = Document::from(html.as_str());
 
@@ -66,11 +63,9 @@ impl Download for Quiz {
                     .and_then(|captures| captures.get(1).map(|match_| match_.as_str()))
                     .ok_or(anyhow!("Could not extract attemptnr from url"))?;
                 let attempt_path = path.join(attemptnr.to_string());
-                config.save_page(
-                    &attempt_path,
-                    &Url::from_str(attempt_url)?,
-                )
-                .await
+                config
+                    .save_page(&attempt_path, &Url::from_str(attempt_url)?)
+                    .await
             }
         });
 
@@ -78,7 +73,7 @@ impl Download for Quiz {
         for res in join_all(tasks).await {
             res.context("Failed Resource")?;
         }
-        
+
         Ok(())
     }
 }

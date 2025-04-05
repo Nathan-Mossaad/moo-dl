@@ -57,10 +57,7 @@ async fn force_download_file(file_path: &Path, request: RequestBuilder) -> Resul
             .and_then(|name| name.to_str())
             .unwrap_or("Unknown Filename");
         template.push_str(filename);
-        Span::current().pb_set_style(
-            &ProgressStyle::default_spinner()
-                .template(&template)?,
-        );
+        Span::current().pb_set_style(&ProgressStyle::default_spinner().template(&template)?);
     }
     Span::current().pb_set_position(0);
     let mut downloaded: u64 = 0;

@@ -1,5 +1,5 @@
-use tokio::{fs::File, io::AsyncWriteExt};
 use anyhow::anyhow;
+use tokio::{fs::File, io::AsyncWriteExt};
 
 use crate::{config::sync_config::Config, update::UpdateState};
 
@@ -44,6 +44,5 @@ impl Config {
                 Ok(())
             }
         }
-
     }
 }

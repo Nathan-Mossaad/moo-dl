@@ -8,9 +8,7 @@ pub struct Glossary {
 impl Download for Glossary {
     async fn download(&self, config: Arc<Config>, path: &Path) -> Result<()> {
         let file_path = path.join(self.name.to_string());
-        let mut glossary_url = config
-            .get_moodle_url()
-            .join("mod/glossary/print.php")?;
+        let mut glossary_url = config.get_moodle_url().join("mod/glossary/print.php")?;
         glossary_url
             .query_pairs_mut()
             .append_pair("id", &self.id.to_string())

@@ -15,7 +15,7 @@ impl UpdateStrategy {
             OutputType::Folder(path_buf) => path_buf,
             OutputType::File(path_buf) => return UpdateStrategy::check_exists(&path_buf).await,
         };
-        
+
         let video_id = format!(
             "[{}]",
             get_vid_id(url).ok_or(anyhow!("Could not extract youtube video id"))?

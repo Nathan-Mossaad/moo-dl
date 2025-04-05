@@ -8,13 +8,11 @@ impl UpdateStrategy {
     /// Check if file is up date
     async fn file_check_file_contents(file_path: &Path, new_content: &str) -> Result<UpdateState> {
         match get_file_contents(file_path).await {
-            Ok(file_content) => Ok(
-                if file_content == new_content {
-                    UpdateState::UpToDate
-                } else {
-                    UpdateState::OutOfDate
-                }
-            ),
+            Ok(file_content) => Ok(if file_content == new_content {
+                UpdateState::UpToDate
+            } else {
+                UpdateState::OutOfDate
+            }),
             Err(e) => {
                 if let Some(io_err) = e.downcast_ref::<io::Error>() {
                     if io_err.kind() == io::ErrorKind::NotFound {
@@ -25,16 +23,22 @@ impl UpdateStrategy {
             }
         }
     }
-    
-    
+
     /// Check if file is up date
     /// Behaves like `timestamp_check_up_to_date` but uses the file content instead of the creation date
-    pub async fn file_check_up_to_date(&self, file_path: &Path, new_content: &str) -> Result<UpdateState> {
+    pub async fn file_check_up_to_date(
+        &self,
+        file_path: &Path,
+        new_content: &str,
+    ) -> Result<UpdateState> {
         match self {
             UpdateStrategy::None => UpdateStrategy::check_exists(file_path).await,
-            UpdateStrategy::Update => UpdateStrategy::file_check_file_contents(file_path, new_content).await,
+            UpdateStrategy::Update => {
+                UpdateStrategy::file_check_file_contents(file_path, new_content).await
+            }
             UpdateStrategy::Archive => {
-                let state = UpdateStrategy::file_check_file_contents(file_path, new_content).await?;
+                let state =
+                    UpdateStrategy::file_check_file_contents(file_path, new_content).await?;
                 if state == UpdateState::OutOfDate {
                     archive_file(file_path).await?;
                 }

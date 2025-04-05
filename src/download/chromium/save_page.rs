@@ -23,7 +23,7 @@ impl Config {
     /// true, if page save has been sucessfull
     /// false, if saving pages is unavailable
     #[instrument(skip(self, file_path, url))]
-    pub(in super) async fn force_save_page(&self, file_path: &Path, url: &Url) -> Result<bool> {
+    pub(super) async fn force_save_page(&self, file_path: &Path, url: &Url) -> Result<bool> {
         let mut template = "{spinner:.green} [{elapsed_precise}] Creating page: ".to_string();
         template.push_str(file_path.to_str().unwrap_or("Unknown Filename"));
         Span::current().pb_set_style(&ProgressStyle::default_spinner().template(&template)?);

@@ -67,7 +67,7 @@ impl Config {
                     if parsed_url.path().contains("playlist") {
                         warn!("Currently youtube playlists are not supported, you may manually download the playlist \"{}\" to: \"{}\"", url_value, &output_folder.to_str().unwrap_or("Unknown Path"));
                         self.status_bar.register_skipped().await;
-                        return Ok(())
+                        return Ok(());
                     }
                     tracing::trace!("Valid URL: {:?}", &parsed_url);
                     // Clone output_folder for each async call.

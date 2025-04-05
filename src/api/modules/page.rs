@@ -31,7 +31,10 @@ impl Download for Page {
         }
 
         let url = Url::from_str(&self.url)?;
-        config.save_page_with_timestamp(&path, &url, self.contentsinfo.lastmodified).await.context("Failed Resource")?;
+        config
+            .save_page_with_timestamp(&path, &url, self.contentsinfo.lastmodified)
+            .await
+            .context("Failed Resource")?;
 
         Ok(())
     }
