@@ -82,7 +82,16 @@ async fn main() -> crate::Result<()> {
             // Show Status bar
             println!("{}", config.status_bar.get_overview().await);
             if let Some(file_path) = &config.log_file {
-                config.status_bar.write_log_to_file(file_path).await?;
+                let log_path = {
+                    if file_path.is_absolute() {
+                        file_path
+                    } else {
+                        let mut config_path = config_path.clone();
+                        let _ = config_path.pop();
+                        &config_path.join(file_path)
+                    }
+                };
+                config.status_bar.write_log_to_file(log_path).await?;
             }
 
             // Wait till chromium is stopped gracefully
