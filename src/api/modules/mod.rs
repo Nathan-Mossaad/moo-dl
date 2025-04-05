@@ -49,7 +49,7 @@ pub enum Module {
     Page(Page),
     #[serde(rename = "quiz")]
     Quiz(Quiz),
-    #[serde(rename = "feedback")]
+    #[serde(rename = "glossary")]
     Glossary(Glossary),
     #[serde(rename = "vpl")]
     Vpl(Vpl),
