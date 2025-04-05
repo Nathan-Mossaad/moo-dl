@@ -25,8 +25,8 @@ use crate::config::sync_config::{Config, Login, LoginState};
 use crate::Result;
 
 pub struct LoginParams {
-    cookie: String,
-    wstoken: Option<String>,
+    pub cookie: String,
+    pub wstoken: Option<String>,
 }
 
 impl Config {

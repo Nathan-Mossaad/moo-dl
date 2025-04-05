@@ -1,6 +1,7 @@
 mod api;
 mod config;
 mod download;
+mod generate_config;
 mod login;
 mod status_bar;
 mod sync;
@@ -18,6 +19,7 @@ pub use anyhow::Result;
 
 use config::cli;
 use config::sync_config::{read_config, Config};
+use generate_config::generate_config;
 
 #[tokio::main]
 async fn main() -> crate::Result<()> {
@@ -89,7 +91,7 @@ async fn main() -> crate::Result<()> {
             login_handle.abort();
         }
         cli::Command::Setup {} => {
-            todo!("TODO: Implement Setup, please create a config manually");
+            generate_config().await?;
         }
     }
 

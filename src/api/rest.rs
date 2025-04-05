@@ -37,12 +37,11 @@ impl Config {
 
     pub(super) async fn core_enrol_get_users_courses(
         &self,
-        user_id: u64,
     ) -> Result<Vec<CoreEnrolGetUsersCourses>> {
         Ok(self
             .api_request_json::<Vec<CoreEnrolGetUsersCourses>>(&[
                 ("wsfunction", "core_enrol_get_users_courses"),
-                ("userid", &user_id.to_string()),
+                ("userid", &self.user_id.to_string()),
             ])
             .await?)
     }

@@ -22,6 +22,7 @@ futures = "0.3"
 
 # Config
 clap = { version = "4.5", features = ["derive"] }
+dialoguer = "0.11"
 
 # Logging
 tracing = "0.1"

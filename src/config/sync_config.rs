@@ -30,10 +30,10 @@ pub fn read_config<P: AsRef<Path>>(path: P) -> Result<Config> {
 }
 
 /// Top-level configuration structure
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct Config {
     pub wstoken: String,
-    pub user_id: String,
+    pub user_id: u64,
     pub login: Login,
     #[serde(skip)]
     pub cookie: Arc<RwLock<LoginState>>,
@@ -45,7 +45,7 @@ pub struct Config {
     #[serde(skip, default)]
     pub chromium: RwLock<ChromiumState>,
     pub youtube: Option<Youtube>,
-    #[serde(skip, default = "get_new_queue")]
+    #[serde(skip, default)]
     pub youtube_queue: YoutubeQueue,
     pub page_conversion: PageConversion,
     pub dir: Option<PathBuf>,
@@ -85,7 +85,14 @@ pub enum Login {
         totp_secret: String,
     },
 }
-fn rwth_url() -> Url {
+impl Default for Login {
+    /// Warning: this is a dummy
+    fn default() -> Self {
+        let url = Url::from_str("https://dummy.example.com/").unwrap();
+        Login::ApiOnly { url }
+    }
+}
+pub fn rwth_url() -> Url {
     Url::from_str("https://moodle.rwth-aachen.de/").unwrap()
 }
 
@@ -127,8 +134,9 @@ pub enum Module {
 }
 
 // Update strategy
-#[derive(Debug, Deserialize, Hash, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Hash, PartialEq, Eq, Default)]
 pub enum UpdateStrategy {
+    #[default]
     None,
     Update,
     Archive,
@@ -155,22 +163,26 @@ pub struct YoutubeQueue {
     pub sender: Sender<Arc<YoutubeVideo>>,
     pub receiver: Receiver<Arc<YoutubeVideo>>,
 }
-fn get_new_queue() -> YoutubeQueue {
-    let (s, r) = async_channel::unbounded::<Arc<YoutubeVideo>>();
-    YoutubeQueue {
-        sender: s,
-        receiver: r,
+impl Default for YoutubeQueue {
+    fn default() -> Self {
+        let (s, r) = async_channel::unbounded::<Arc<YoutubeVideo>>();
+        YoutubeQueue {
+            sender: s,
+            receiver: r,
+        }
     }
 }
 
+
 /// Page conversion settings – only one of these should be set.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 #[serde(tag = "type", content = "path")]
 pub enum PageConversion {
     /// Use the single-file tool to convert it to an html-document
     SingleFile(PathBuf),
     /// Store entire file as pdf with a single page
     SinglePage,
+    #[default]
     /// Standard chrome pdf conversion
     Standard,
 }
