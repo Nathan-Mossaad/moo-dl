@@ -57,10 +57,10 @@ modules:
   - Lti
   - Grouptool
   # Saving feedbacks is currently not supported and not any time soon
-  - Feedback
+  #- Feedback
   # Saving forums is currently not supported and not any time soon
-  - Forum
-  - Hsuforum
+  #- Forum
+  #- Hsuforum
 
 # Enables saving grades
 grades: true

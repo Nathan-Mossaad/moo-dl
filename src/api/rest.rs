@@ -20,7 +20,6 @@ pub struct CoreEnrolGetUsersCourses {
 
 #[derive(Debug, Deserialize)]
 pub struct CoreCourseGetContentsElement {
-    pub id: u64,
     pub name: String,
     pub modules: Vec<Module>,
 }
@@ -46,7 +45,6 @@ impl Config {
             .await?)
     }
 
-    // TODO: change to pub(super) and implement download module in helpers
     pub async fn api_core_course_get_contents(
         &self,
         course_id: u64,

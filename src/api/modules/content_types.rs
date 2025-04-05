@@ -114,9 +114,10 @@ impl Download for ContentUrl {
         
         // Additionally save webpage
         let file_path = path.join(&self.filename);
-        config.save_page(
+        config.save_page_with_timestamp(
             &file_path,
             &Url::from_str(&self.fileurl)?,
+            self.timemodified,
         )
         .await?;
         Ok(())

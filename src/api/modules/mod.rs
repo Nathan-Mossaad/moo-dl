@@ -5,12 +5,9 @@ pub(super) mod content_types;
 // modules
 mod apiurl;
 mod assign;
-mod feedback;
 mod folder;
-mod forum;
 mod glossary;
 mod grouptool;
-mod hsuforum;
 mod label;
 mod lti;
 mod page;
@@ -22,12 +19,9 @@ mod vpl;
 // Reexport
 use apiurl::*;
 use assign::*;
-use feedback::*;
 use folder::*;
-use forum::*;
 use glossary::*;
 use grouptool::*;
-use hsuforum::*;
 use label::*;
 use lti::*;
 use page::*;
@@ -56,17 +50,11 @@ pub enum Module {
     #[serde(rename = "quiz")]
     Quiz(Quiz),
     #[serde(rename = "feedback")]
-    Feedback(Feedback),
-    #[serde(rename = "glossary")]
     Glossary(Glossary),
     #[serde(rename = "vpl")]
     Vpl(Vpl),
     #[serde(rename = "lti")]
     Lti(Lti),
-    #[serde(rename = "forum")]
-    Forum(Forum),
-    #[serde(rename = "hsuforum")]
-    HsuForum(HsuForum),
     #[serde(rename = "grouptool")]
     Grouptool(Grouptool),
     #[serde(other)]
@@ -88,8 +76,7 @@ impl Download for Module {
             Module::Assign(a) => a.download(config, path).await?,
             Module::Pdfannotator(a) => a.download(config, path).await?,
             Module::Grouptool(a) => a.download(config, path).await?,
-            // TODO
-            _ => {}
+            Module::Unknown => {}
         }
         Ok(())
     }

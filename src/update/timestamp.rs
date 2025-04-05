@@ -1,6 +1,3 @@
-// TODO: remove
-#![allow(dead_code)]
-
 use std::{
     fs::FileTimes,
     path::Path,

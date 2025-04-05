@@ -9,7 +9,6 @@ use super::*;
 pub struct Vpl {
     pub id: u64,
     pub name: String,
-    pub url: String,
 }
 impl Download for Vpl {
     async fn download(&self, config: Arc<Config>, path: &Path) -> Result<()> {

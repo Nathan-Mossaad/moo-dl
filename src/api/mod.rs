@@ -1,6 +1,3 @@
-// TODO: remove
-#![allow(dead_code)]
-
 // Everthing from here on out should start with api_
 pub mod helpers;
 pub mod modules;
@@ -111,12 +108,9 @@ fn config_module_of(m: &Module) -> Option<ConfigModule> {
         Module::ApiUrl(_) => Some(ConfigModule::Url),
         Module::Page(_) => Some(ConfigModule::Page),
         Module::Quiz(_) => Some(ConfigModule::Quiz),
-        Module::Feedback(_) => Some(ConfigModule::Feedback),
         Module::Glossary(_) => Some(ConfigModule::Glossary),
         Module::Vpl(_) => Some(ConfigModule::Vpl),
         Module::Lti(_) => Some(ConfigModule::Lti),
-        Module::Forum(_) => Some(ConfigModule::Forum),
-        Module::HsuForum(_) => Some(ConfigModule::Hsuforum),
         Module::Grouptool(_) => Some(ConfigModule::Grouptool),
         Module::Unknown => None,
     }

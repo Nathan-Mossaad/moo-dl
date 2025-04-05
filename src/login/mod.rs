@@ -1,6 +1,3 @@
-// TODO: remove
-#![allow(dead_code)]
-
 pub mod graphical;
 pub mod rwth;
 pub mod user_pass;

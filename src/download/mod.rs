@@ -1,6 +1,3 @@
-// TODO: remove
-#![allow(dead_code)]
-
 pub mod raw_file;
 pub mod request;
 pub mod youtube;

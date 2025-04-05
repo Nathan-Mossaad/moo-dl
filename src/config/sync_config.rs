@@ -1,6 +1,3 @@
-// TODO: remove
-#![allow(dead_code)]
-
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};

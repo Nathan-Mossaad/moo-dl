@@ -1,6 +1,3 @@
-// TODO: remove
-#![allow(dead_code)]
-
 use std::path::Path;
 
 use tokio::{fs::File, io::AsyncReadExt};
