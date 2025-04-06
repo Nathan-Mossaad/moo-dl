@@ -132,9 +132,9 @@ modules:
   - Label
   - Url
   - Page
-  - Quiz
+  #- Quiz
   - Glossary
-  - Vpl
+  #- Vpl
   # Currently Lti is equivalent to opencast (which requires youtube to be enabled)
   - Lti
   - Grouptool
