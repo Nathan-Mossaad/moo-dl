@@ -2,6 +2,13 @@
 name = "moo-dl"
 version = "0.1.0"
 edition = "2021"
+license = "AGPL-3.0-or-later"
+description = "A next generation moodle sync client with a focus und speed and function."
+readme = "README.md"
+keywords = ["moodle"]
+categories = ["command-line-utilities"]
+homepage = "https://github.com/Nathan-Mossaad/moo-dl"
+repository = "https://github.com/Nathan-Mossaad/moo-dl"
 
 [dependencies]
 # Error handeling
