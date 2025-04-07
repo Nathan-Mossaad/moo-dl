@@ -26,7 +26,7 @@ async fn main() -> crate::Result<()> {
     // Start logging
     let indicatif_layer = IndicatifLayer::new();
 
-    let base_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+    let base_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("moo_dl=info"));
     // Create a reloadable layer that wraps the EnvFilter.
     let (reload_layer, reload_handle) = reload::Layer::new(base_filter);
 
