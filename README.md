@@ -1,6 +1,6 @@
 # moo-dl 🚀
 
-A next generation moodle sync client with a focus und speed and function.
+A next generation moodle sync client with a focus on speed and function.
 
 ## Features
 
