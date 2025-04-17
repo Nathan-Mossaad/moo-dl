@@ -164,12 +164,12 @@ impl PercentStrExtractor {
             trace!("Extracted percentage: {}", percent_string);
             self.percentage = match percent_string.parse() {
                 Ok(val) => {
-                        if ((val - self.percentage) as f32).abs() < 50.0 {
-                            self.percentage.max(val)
-                        } else {
-                            val
-                        }
-                    },
+                    if ((val - self.percentage) as f32).abs() < 50.0 {
+                        self.percentage.max(val)
+                    } else {
+                        val
+                    }
+                }
                 Err(_) => return,
             };
         } else {

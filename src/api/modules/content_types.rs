@@ -23,6 +23,7 @@ pub struct ContentFile {
     filepath: String,
     fileurl: String,
     timemodified: u64,
+    filesize: Option<u64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -68,7 +69,7 @@ impl Download for ContentFile {
             .query(&[("token", &config.wstoken)]);
 
         let download_result = config
-            .download_file_with_timestamp(file_path, request, self.timemodified)
+            .download_file_with_timestamp(file_path, request, self.timemodified, self.filesize)
             .await;
 
         if let Err(e) = download_result {

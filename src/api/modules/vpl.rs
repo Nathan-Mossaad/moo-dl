@@ -33,7 +33,7 @@ impl Download for Vpl {
             .get(description_files_url)
             .header("Cookie", "MoodleSession=".to_string() + &cookie);
         let download_result = config
-            .download_file(&description_file_path, description_request)
+            .download_file(&description_file_path, description_request, None)
             .await;
         if let Err(e) = download_result {
             config
@@ -104,6 +104,7 @@ impl Download for Vpl {
                             "submission-files_submissionid-".to_string() + submissionid + ".zip",
                         ),
                         request,
+                        None,
                     )
                     .await
             }

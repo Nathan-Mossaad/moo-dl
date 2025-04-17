@@ -21,7 +21,11 @@ use crate::{
 ///
 /// Uses a temporary file for downloads to prevent data loss in case of UpdateStrategy:Update
 #[instrument(skip(file_path, request))]
-async fn force_download_file(file_path: &Path, request: RequestBuilder) -> Result<()> {
+async fn force_download_file(
+    file_path: &Path,
+    request: RequestBuilder,
+    filesize: Option<u64>,
+) -> Result<()> {
     // Make sure path exists
     ensure_path_exists(file_path).await?;
 
@@ -34,7 +38,8 @@ async fn force_download_file(file_path: &Path, request: RequestBuilder) -> Resul
         .headers()
         .get(reqwest::header::CONTENT_LENGTH)
         .and_then(|ct_len| ct_len.to_str().ok())
-        .and_then(|ct_len| ct_len.parse::<u64>().ok());
+        .and_then(|ct_len| ct_len.parse::<u64>().ok())
+        .or(filesize);
 
     // Animation
     if let Some(total_size) = total_size {
@@ -83,10 +88,15 @@ async fn force_download_file(file_path: &Path, request: RequestBuilder) -> Resul
 impl Config {
     /// Same as `force_download_file` but only downloads if file does not exist
     /// Additionally writes the event to log
-    pub async fn download_file(&self, file_path: &Path, request: RequestBuilder) -> Result<()> {
+    pub async fn download_file(
+        &self,
+        file_path: &Path,
+        request: RequestBuilder,
+        filesize: Option<u64>,
+    ) -> Result<()> {
         match UpdateStrategy::check_exists(file_path).await? {
             UpdateState::Missing => {
-                force_download_file(file_path, request).await?;
+                force_download_file(file_path, request, filesize).await?;
                 let message = file_path.to_str().ok_or_else(|| anyhow!("Invalid path"))?;
                 self.status_bar.register_new(message).await;
                 Ok(())
@@ -106,6 +116,7 @@ impl Config {
         file_path: &Path,
         request: RequestBuilder,
         timestamp: u64,
+        filesize: Option<u64>,
     ) -> Result<()> {
         match self
             .update_strategy
@@ -113,7 +124,7 @@ impl Config {
             .await?
         {
             UpdateState::Missing => {
-                force_download_file(file_path, request).await?;
+                force_download_file(file_path, request, filesize).await?;
                 set_file_creation(file_path, timestamp).await?;
 
                 let message = file_path.to_str().ok_or_else(|| anyhow!("Invalid path"))?;
@@ -121,7 +132,7 @@ impl Config {
                 Ok(())
             }
             UpdateState::OutOfDate => {
-                force_download_file(file_path, request).await?;
+                force_download_file(file_path, request, filesize).await?;
                 set_file_creation(file_path, timestamp).await?;
 
                 let message = file_path.to_str().ok_or_else(|| anyhow!("Invalid path"))?;
