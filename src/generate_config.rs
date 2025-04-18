@@ -174,8 +174,10 @@ page_conversion:
 log_file: moo-dl.log
 
 # Optional: Regex to filter out files
-# Warning: These only get applied for files directly served by the api,
-#            to filter other files please remove the corresponding modules directly
+# Warning: These only get applied to:
+#   1. filenames as presented by the moodle api
+#   2. youtube and opencast urls
+# (to filter other files please remove the corresponding modules directly)
 file_filters:
   # - reg1
   # - reg2

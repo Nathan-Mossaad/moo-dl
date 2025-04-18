@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use regex::Regex;
 use tracing::warn;
 use url::Url;
 
@@ -48,17 +47,9 @@ impl Download for Content {
 
 impl Download for ContentFile {
     async fn download(&self, config: Arc<Config>, path: &Path) -> Result<()> {
-        // Filter regex
-        if let Some(filters) = &config.file_filters {
-            for filter in filters {
-                let re = Regex::new(filter)
-                    .map_err(|e| anyhow::anyhow!("Invalid regex {}: {}", filter, e))?;
-                if re.is_match(&self.filename) {
-                    // If the filename matches one of the filters, return early.
-                    config.status_bar.register_skipped().await;
-                    return Ok(());
-                }
-            }
+        // Check against regex filters
+        if config.check_filter(&self.filename).await? {
+            return Ok(());
         }
 
         let file_path = &self::assemble_path(path, &self.filepath, &self.filename);

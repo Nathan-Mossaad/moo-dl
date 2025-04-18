@@ -41,7 +41,14 @@ impl Config {
         youtube_download_queue
     }
 
+    /// Queues a video for yt-dlp
+    /// Additionally checks against regex filters
     pub async fn queue_youtube_video(&self, url: Url, output: OutputType) -> Result<()> {
+        // Check against regex filters
+        if self.check_filter(url.as_str()).await? {
+            return Ok(());
+        }
+
         let youtube_vid = Arc::new(YoutubeVideo { url, output });
         self.youtube_queue.sender.send(youtube_vid).await?;
         Ok(())
