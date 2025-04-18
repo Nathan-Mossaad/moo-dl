@@ -56,6 +56,7 @@ Run: `moo-dl sync`
 | resource (basic file)                                                        |       ✔️       |                ✔️                 |                     |
 | folder                                                                       |       ✔️       |                ✔️                 |                     |
 | pdfannotator                                                                 |       ✔️       |                ✔️                 |                     |
+| Sciebo (Files and folders)                                                   |       ✔️       |                ✔️                 |                     |
 | assignment                                                                   |       ✔️       |                ✔️                 |   ✔️<sup>1</sup>    |
 | label                                                                        |       ✔️       |                ✔️                 |         ✔️          |
 | Grades                                                                       |       ✔️       |                ✔️                 |                     |

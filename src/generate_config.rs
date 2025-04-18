@@ -149,6 +149,9 @@ update_strategy: Archive
 # (may be removed)
 #chrome_executable: /usr/bin/chromium-browser
 
+# Enables downloading of linked sciebo files/folders
+sciebo: true
+
 # Enables downloading youtube videos (may be removed)
 youtube:
   path: yt-dlp
@@ -177,6 +180,7 @@ log_file: moo-dl.log
 # Warning: These only get applied to:
 #   1. filenames as presented by the moodle api
 #   2. youtube and opencast urls
+#   3. sciebo downloads
 # (to filter other files please remove the corresponding modules directly)
 file_filters:
   # - reg1

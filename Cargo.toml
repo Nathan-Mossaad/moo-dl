@@ -1,6 +1,6 @@
 [package]
 name = "moo-dl"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "AGPL-3.0-or-later"
 description = "A next generation moodle sync client with a focus und speed and function."
@@ -41,6 +41,9 @@ strip-ansi-escapes = "0.2"
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_yml = "0.0.12"
+serde_json = "1.0"
+quick-xml = { version = "0.37", features = ["serialize"] }
+percent-encoding = "2.3"
 
 # Networking
 url = { version = "2.5", features = ["serde"] }
@@ -54,7 +57,6 @@ reqwest = { version = "0.12", features = [
     "deflate",
     "http2",
 ] }
-serde_json = "1.0"
 
 # Login and browser
 chromiumoxide = { version = "0.7", features = [

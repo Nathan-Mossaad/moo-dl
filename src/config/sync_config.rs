@@ -41,6 +41,7 @@ pub struct Config {
     pub chrome_executable: Option<PathBuf>,
     #[serde(skip, default)]
     pub chromium: RwLock<ChromiumState>,
+    pub sciebo: bool,
     pub youtube: Option<Youtube>,
     #[serde(skip, default)]
     pub youtube_queue: YoutubeQueue,

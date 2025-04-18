@@ -1,4 +1,5 @@
 pub mod chromium;
+pub mod minidav;
 pub mod raw_file;
 pub mod request;
 pub mod youtube;

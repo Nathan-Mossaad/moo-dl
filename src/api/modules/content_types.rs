@@ -86,6 +86,8 @@ impl Download for ContentUrl {
         config
             .queue_youtube_vidoes_extract(&self.fileurl, path.to_owned())
             .await?;
+        // Check for sciebo links
+        Config::extract_sciebo_download(config.clone(), &self.fileurl, path.to_owned()).await?;
 
         // Create .html, that redirects to the url
         let redirect_path = path.join(format!("{}.html", &self.filename));

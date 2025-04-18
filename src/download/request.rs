@@ -145,4 +145,21 @@ impl Config {
             }
         }
     }
+
+    /// Same as other download_file_with_timestamp and `download_file_with_timestamp`
+    pub async fn download_file_option_timestamp(
+        &self,
+        file_path: &Path,
+        request: RequestBuilder,
+        timestamp: Option<u64>,
+        filesize: Option<u64>,
+    ) -> Result<()> {
+        match timestamp {
+            Some(timestamp) => {
+                self.download_file_with_timestamp(&file_path, request, timestamp, filesize)
+                    .await
+            }
+            None => self.download_file(&file_path, request, filesize).await,
+        }
+    }
 }

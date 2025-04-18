@@ -12,6 +12,8 @@ impl Download for Label {
         config
             .queue_youtube_vidoes_extract(&self.description, path.to_owned())
             .await?;
+        // Check for sciebo links
+        Config::extract_sciebo_download(config.clone(), &self.description, path.to_owned()).await?;
 
         let file_name = format!("{}.html", self.name);
         let path = path.join(file_name);
