@@ -23,15 +23,11 @@ impl Config {
     // # Returns
     // true, if some regex matched
     pub async fn check_filter(&self, str: &str) -> Result<bool> {
-        if let Some(filters) = self.file_filters.as_ref() {
-            for filter in filters {
-                let re = regex::Regex::new(filter)
-                    .map_err(|e| anyhow::anyhow!("Invalid regex {}: {}", filter, e))?;
-                if re.is_match(&str) {
-                    // If the filename matches one of the filters, return early.
-                    self.status_bar.register_skipped().await;
-                    return Ok(true);
-                }
+        for re in &self.file_filters {
+            if re.is_match(&str) {
+                // If the filename matches one of the filters, return early.
+                self.status_bar.register_skipped().await;
+                return Ok(true);
             }
         }
         Ok(false)

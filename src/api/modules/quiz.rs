@@ -1,12 +1,15 @@
 use std::str::FromStr;
 
 use anyhow::anyhow;
+use once_cell::sync::Lazy;
 use regex::Regex;
 use select::{document::Document, predicate::Name};
 use tracing::trace;
 use url::Url;
 
 use super::*;
+
+static RE_ATTEMPT: Lazy<Regex> = Lazy::new(|| Regex::new(r"attempt=(\d+)").unwrap());
 
 #[derive(Debug, Deserialize)]
 pub struct Quiz {
@@ -57,7 +60,7 @@ impl Download for Quiz {
             let config = config.clone();
             let path = path.clone();
             async move {
-                let regex = Regex::new(r"attempt=(\d+)").unwrap();
+                let regex = &RE_ATTEMPT;
                 let attemptnr = regex
                     .captures(attempt_url)
                     .and_then(|captures| captures.get(1).map(|match_| match_.as_str()))

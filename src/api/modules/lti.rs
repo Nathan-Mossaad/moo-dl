@@ -1,6 +1,7 @@
 use std::str::FromStr as _;
 
 use anyhow::anyhow;
+use once_cell::sync::Lazy;
 use regex::Regex;
 use select::{document::Document, predicate::Attr};
 use tracing::trace;
@@ -9,6 +10,9 @@ use url::Url;
 use crate::download::youtube::OutputType;
 
 use super::*;
+
+static RE_VIDEO_IDENTIFIER: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"video_identifier=([a-f0-9\-]+)&").unwrap());
 
 // This currently is basically RWTH opencast
 #[derive(Debug, Deserialize)]
@@ -25,7 +29,7 @@ impl Download for Lti {
         if self.modicon == "https://moodle.rwth-aachen.de/theme/image.php/boost_union_rwth/theme_boost_union_rwth/-1/opencast_episode?filtericon=1" {
             // We can use the publically available m3u8
             // https://streaming.rwth-aachen.de/rwth_production/_definst_/smil:prod/smil:engage-player_{video_identifier}_presentation.smil/playlist.m3u8
-            let re = Regex::new(r"video_identifier=([a-f0-9\-]+)&").unwrap();
+            let re = &RE_VIDEO_IDENTIFIER;
 
             // Try to get vid_id via description
             let vid_id = match &self.description {

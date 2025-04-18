@@ -1384,6 +1384,7 @@ dependencies = [
  "dialoguer",
  "futures",
  "indicatif",
+ "once_cell",
  "percent-encoding",
  "quick-xml",
  "regex",

@@ -1,12 +1,15 @@
 use anyhow::{anyhow, Context};
 use chrono::{DateTime, FixedOffset};
 use futures::future::join_all;
+use once_cell::sync::Lazy;
 use reqwest::header::CONTENT_DISPOSITION;
 use serde::{de, Deserialize, Deserializer};
 use tracing::{debug, trace};
 use url::Url;
 
 use super::*;
+
+static RE_FILENAME: Lazy<Regex> = Lazy::new(|| Regex::new(r#"filename\*=UTF-8''.*;"#).unwrap());
 
 #[derive(Debug, Deserialize)]
 #[serde(rename = "multistatus")]
@@ -221,7 +224,7 @@ pub async fn get_filename_from_url_simple(config: &Config, url: &Url) -> Result<
         .to_str()?;
     trace!("Content-Disposition header: {:?}", header_value);
 
-    let re = Regex::new(r#"filename\*=UTF-8''.*;"#)?;
+    let re = &RE_FILENAME;
     if let Some(capture) = re.captures(header_value) {
         if let Some(name) = capture.get(0) {
             let name = &name.as_str()[17..name.len() - 1];

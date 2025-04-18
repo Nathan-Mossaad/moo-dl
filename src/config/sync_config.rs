@@ -6,8 +6,9 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use async_channel::{Receiver, Sender};
+use regex::Regex;
 use reqwest::Client;
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 use tokio::sync::RwLock;
 use tracing::debug;
 use url::Url;
@@ -48,7 +49,8 @@ pub struct Config {
     pub page_conversion: PageConversion,
     pub dir: Option<PathBuf>,
     pub log_file: Option<PathBuf>,
-    pub file_filters: Option<Vec<String>>,
+    #[serde(deserialize_with = "deserialize_file_filters")]
+    pub file_filters: Vec<Regex>,
     #[serde(skip)]
     pub status_bar: Arc<StatusBar>,
     #[serde(skip, default = "create_standard_client")]
@@ -193,4 +195,22 @@ fn create_standard_client() -> Client {
         .deflate(true)
         .build()
         .expect("Something went catastrophically wrong, could not create a reqwest client")
+}
+
+fn deserialize_file_filters<'de, D>(deserializer: D) -> Result<Vec<Regex>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let string_filters: Vec<String> = Deserialize::deserialize(deserializer)?;
+
+    string_filters
+        .into_iter()
+        .map(|s| match Regex::new(&s) {
+            Ok(s) => Ok(s),
+            Err(e) => {
+                println!("Could not read config!");
+                panic!("Failed to compile regex '{}': {}", s, e);
+            }
+        })
+        .collect::<Result<Vec<Regex>, D::Error>>()
 }

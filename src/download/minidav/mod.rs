@@ -4,11 +4,15 @@ use std::{path::PathBuf, str::FromStr, sync::Arc};
 
 use anyhow::Context;
 use futures::future::join_all;
+use once_cell::sync::Lazy;
 use percent_encoding::percent_decode;
 use regex::{Captures, Regex};
 use url::Url;
 
 use super::*;
+
+static RE_SCIEBO: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"https:\/\/[a-zA-Z0-9-]+\.sciebo\.de\/s\/[a-zA-Z0-9-]+"#).unwrap());
 
 impl Config {
     /// Extracts Sciebo URLs from the given `search_space` and downloads them.
@@ -23,7 +27,7 @@ impl Config {
         }
         tracing::trace!("Looking for sciebo links in: {}", search_space);
 
-        let re = Regex::new(r#"https:\/\/[a-zA-Z0-9-]+\.sciebo\.de\/s\/[a-zA-Z0-9-]+"#)?;
+        let re = &RE_SCIEBO;
         // Iterate over every match in the search_space.
         let tasks = re
             .captures_iter(search_space)

@@ -1,11 +1,16 @@
 use std::sync::Arc;
 
 use futures::future::join_all;
+use once_cell::sync::Lazy;
 use regex::Regex;
 use tokio::task::JoinHandle;
 use tracing::warn;
 
 use super::*;
+
+static RE_YOUTUBE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"(?:https?:?\/\/)?((?:www|m)\.)?((?:youtube(?:-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|live\/|v\/)?)([\w\-]+)(\S+)?"#).unwrap()
+});
 
 pub struct YoutubeDownloadQueue {
     threads: Vec<JoinHandle<()>>,
@@ -61,9 +66,7 @@ impl Config {
         output_folder: PathBuf,
     ) -> Result<()> {
         // Regex adapted from: https://stackoverflow.com/questions/19377262/regex-for-youtube-url
-        let re = Regex::new(
-            r#"(?:https?:?\/\/)?((?:www|m)\.)?((?:youtube(?:-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|live\/|v\/)?)([\w\-]+)(\S+)?"#,
-        )?;
+        let re = &RE_YOUTUBE;
         // Iterate over every match in the search_space.
         for cap in re.captures_iter(search_space) {
             if let Some(url_str) = cap.get(0) {

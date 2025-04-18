@@ -1,9 +1,12 @@
 use anyhow::anyhow;
+use once_cell::sync::Lazy;
 use regex::Regex;
 use select::{document::Document, predicate::Name};
 use url::Url;
 
 use super::*;
+
+static RE_SUBMISSIONID: Lazy<Regex> = Lazy::new(|| Regex::new(r"submissionid=(\d+)").unwrap());
 
 #[derive(Debug, Deserialize)]
 pub struct Vpl {
@@ -89,7 +92,7 @@ impl Download for Vpl {
             let config = config.clone();
             let cookie = cookie.clone();
             async move {
-                let regex = Regex::new(r"submissionid=(\d+)").unwrap();
+                let regex = &RE_SUBMISSIONID;
                 let submissionid = regex
                     .captures(url)
                     .and_then(|captures| captures.get(1).map(|match_| match_.as_str()))
