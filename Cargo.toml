@@ -1,7 +1,7 @@
 [package]
 name = "moo-dl"
 version = "0.1.1"
-edition = "2021"
+edition = "2024"
 license = "AGPL-3.0-or-later"
 description = "A next generation moodle sync client with a focus und speed and function."
 readme = "README.md"
