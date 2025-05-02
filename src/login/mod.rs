@@ -90,7 +90,7 @@ impl Config {
                 *cookie_guard = LoginState::Cookie {
                     cookie: Arc::new(login_result.cookie),
                 };
-                info!("Logged in using, raw params!");
+                info!("Logged in using, graphical!");
                 Ok(())
             }
             Login::UserPass {
