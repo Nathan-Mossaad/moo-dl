@@ -63,23 +63,21 @@ impl StatusBar {
     pub async fn register_updated<'a>(&self, message: impl Into<&'a str>) {
         let mut updated = self.updated.lock().await;
         *updated += 1;
-        let entry = self
-            .create_log_entry(message, "\x1b[34mUpdated\x1b[0m: ")
-            .await;
+        let entry = self.create_log_entry(message, "Updated: ").await;
         info!("{}", entry);
     }
 
     pub async fn register_new(&self, message: &str) {
         let mut new = self.new.lock().await;
         *new += 1;
-        let entry = self.create_log_entry(message, "\x1b[32mNew\x1b[0m: ").await;
+        let entry = self.create_log_entry(message, "New: ").await;
         info!("{}", entry);
     }
 
     pub async fn register_err(&self, message: &str) {
         let mut err = self.err.lock().await;
         *err += 1;
-        let entry = self.create_log_entry(message, "\x1b[31mErr\x1b[0m: ").await;
+        let entry = self.create_log_entry(message, "Err: ").await;
         error!("{}", entry);
     }
 
