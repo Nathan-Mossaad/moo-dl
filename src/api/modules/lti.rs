@@ -30,7 +30,6 @@ impl Download for Lti {
             == "https://moodle.rwth-aachen.de/theme/image.php/boost_union_rwth/theme_boost_union_rwth/-1/opencast_episode?filtericon=1"
         {
             // We can use the publically available m3u8
-            // https://streaming.rwth-aachen.de/rwth_production/_definst_/smil:prod/smil:engage-player_{video_identifier}_presenter.smil/playlist.m3u8
             let re = &RE_VIDEO_IDENTIFIER;
 
             // Try to get vid_id via description
@@ -82,10 +81,24 @@ impl Download for Lti {
 
             trace!("Opencast Video id: {:?}", vid_id);
 
-            let url = Url::from_str(&format!(
-                "https://streaming.rwth-aachen.de/rwth_production/_definst_/smil:prod/smil:engage-player_{}_presenter.smil/playlist.m3u8",
+            let mut url = Url::from_str(&format!(
+                "https://streaming.rwth-aachen.de/rwth/smil:engage-player_{}_presentation.smil/playlist.m3u8",
                 vid_id
             ))?;
+            // Ensure "presentation" is valid, otherwise fall back to "presenter"
+            if let Err(_) = config
+                .client
+                .get(url.as_ref())
+                .send()
+                .await?
+                .error_for_status()
+            {
+                url = Url::from_str(&format!(
+                    "https://streaming.rwth-aachen.de/rwth/smil:engage-player_{}_presenter.smil/playlist.m3u8",
+                    vid_id
+                ))?;
+            }
+
             let file_path = path.join(&self.name).with_extension("mp4");
 
             config
