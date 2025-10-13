@@ -7,6 +7,7 @@ use tokio::{fs::OpenOptions, io::AsyncWriteExt};
 use tracing::{error, info};
 
 use crate::Result;
+use crate::config::sync_config::Config;
 
 #[derive(Debug, Default)]
 pub struct StatusBar {
@@ -83,7 +84,11 @@ impl StatusBar {
     }
 
     // Appends contents of self.log to a log file
-    pub async fn write_log_to_file(&self, file_path: &Path) -> Result<()> {
+    pub(crate) async fn write_log_to_file(
+        &self,
+        file_path: &Path,
+        emergency_shutdown: bool,
+    ) -> Result<()> {
         let mut file = OpenOptions::new()
             .create(true)
             .append(true)
@@ -91,6 +96,10 @@ impl StatusBar {
             .await?;
 
         let mut buffer = Vec::new();
+
+        if emergency_shutdown {
+            buffer.extend_from_slice(b"Warning: Emergency shutdown! (Data may be incomplete)");
+        }
 
         {
             let self_log = self.log.lock().await;
@@ -110,6 +119,17 @@ impl StatusBar {
 
         file.write_all(&buffer).await?;
         file.flush().await?;
+        Ok(())
+    }
+}
+
+impl Config {
+    pub async fn write_log_to_file(&self, emergency_shutdown: bool) -> Result<()> {
+        if let Some(file_path) = &self.log_file {
+            self.status_bar
+                .write_log_to_file(file_path.as_path(), emergency_shutdown)
+                .await?;
+        }
         Ok(())
     }
 }

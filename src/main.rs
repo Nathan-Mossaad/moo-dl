@@ -55,6 +55,21 @@ async fn main() -> crate::Result<()> {
     match cli.command {
         cli::Command::Sync { config_path } => {
             let config = Arc::new(read_config(&config_path)?);
+
+            let shutdown_config = config.clone();
+            tokio::spawn(async move {
+                tokio::signal::ctrl_c()
+                    .await
+                    .expect("failed to listen for ctrl+c");
+
+                shutdown_config
+                    .write_log_to_file(true)
+                    .await
+                    .expect("Failed to write log file");
+
+                std::process::exit(130);
+            });
+
             // Start Login
             let login_handle = Config::login_thread(config.clone()).await;
             // Spawn youtube downloader threads
@@ -82,18 +97,7 @@ async fn main() -> crate::Result<()> {
                 .expect("Failed to update the filter");
             // Show Status bar
             println!("{}", config.status_bar.get_overview().await);
-            if let Some(file_path) = &config.log_file {
-                let log_path = {
-                    if file_path.is_absolute() {
-                        file_path
-                    } else {
-                        let mut config_path = config_path.clone();
-                        let _ = config_path.pop();
-                        &config_path.join(file_path)
-                    }
-                };
-                config.status_bar.write_log_to_file(log_path).await?;
-            }
+            config.write_log_to_file(false).await?;
 
             // Wait till chromium is stopped gracefully
             config.chromium_wait().await;

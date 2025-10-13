@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -19,10 +19,24 @@ use crate::Result;
 use crate::download::youtube::YoutubeVideo;
 use crate::status_bar::StatusBar;
 
-pub fn read_config<P: AsRef<Path>>(path: P) -> Result<Config> {
-    let contents = fs::read_to_string(path).with_context(|| "Failed to read config file")?;
-    let config: Config = serde_yml::from_str(&contents)
+pub fn read_config(path: &PathBuf) -> Result<Config> {
+    let contents = fs::read_to_string(&path).with_context(|| "Failed to read config file")?;
+    let mut config: Config = serde_yml::from_str(&contents)
         .with_context(|| "Could not parse config (There is most likely an error in the config)")?;
+
+    if let Some(file_path) = &config.log_file {
+        let log_path = {
+            if file_path.is_absolute() {
+                file_path
+            } else {
+                let mut config_path = path.clone();
+                let _ = config_path.pop();
+                &config_path.join(file_path)
+            }
+        };
+        config.log_file = Some(log_path.into());
+    }
+
     debug!("Read config: {:?}", config);
     Ok(config)
 }
