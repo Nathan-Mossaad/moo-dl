@@ -9,7 +9,7 @@ use web2pdf_lib::{Browser, BrowserWeb2Pdf};
 
 use crate::{
     config::sync_config::{ChromiumState, Config, PageConversion, UpdateStrategy},
-    update::{archive_file, timestamp::set_file_creation, UpdateState},
+    update::{UpdateState, archive_file, timestamp::set_file_creation},
 };
 
 use super::{raw_file::force_write_file_contents, *};

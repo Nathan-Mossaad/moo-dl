@@ -3,8 +3,7 @@ use std::path::Path;
 use anyhow::Context;
 use futures::future::join_all;
 
-use indicatif::ProgressStyle;
-use tracing::{instrument, Span};
+use tracing::{Span, instrument};
 use tracing_indicatif::span_ext::IndicatifSpanExt;
 
 use crate::{api::Download, config::sync_config::Course};
@@ -52,7 +51,7 @@ impl Config {
     pub async fn download_courses(config: Arc<Config>, path: &Path) {
         let template = "{spinner:.green} [{elapsed_precise}] Checking for updates ... ".to_string();
         Span::current().pb_set_style(
-            &ProgressStyle::default_spinner()
+            &tracing_indicatif::style::ProgressStyle::default_spinner()
                 .template(&template)
                 .unwrap(),
         );

@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use indicatif::ProgressBar;
 use tokio::fs;
 use url::Url;
@@ -8,7 +8,7 @@ use url::Url;
 use dialoguer::{Input, Select};
 
 use crate::{
-    config::sync_config::{rwth_url, Login},
+    config::sync_config::{Login, rwth_url},
     login::{graphical::login_graphical, rwth::from_rwth, user_pass::from_username_password},
 };
 

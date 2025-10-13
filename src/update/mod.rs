@@ -7,7 +7,7 @@ use std::{path::Path, time::UNIX_EPOCH};
 use chrono::prelude::{DateTime, Local};
 use tokio::{fs, io};
 
-use crate::{config::sync_config::UpdateStrategy, Result};
+use crate::{Result, config::sync_config::UpdateStrategy};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum UpdateState {

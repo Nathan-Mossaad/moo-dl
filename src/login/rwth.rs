@@ -1,4 +1,4 @@
-use reqwest::{cookie::Jar, Client};
+use reqwest::{Client, cookie::Jar};
 use tokio::task;
 use totp_rs::{Algorithm, Secret, TOTP};
 use tracing::{debug, trace};

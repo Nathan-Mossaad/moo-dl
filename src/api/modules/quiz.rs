@@ -32,8 +32,7 @@ impl Download for Quiz {
         };
         trace!(
             "Attempting to get available quiz attempts for quiz id: {} name: {}",
-            self.id,
-            self.name
+            self.id, self.name
         );
 
         let response = config

@@ -1,14 +1,13 @@
 use std::process::Stdio;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
     process::Command,
 };
 use url::Url;
 
-use indicatif::ProgressStyle;
-use tracing::{instrument, trace, Span};
+use tracing::{Span, instrument, trace};
 use tracing_indicatif::span_ext::IndicatifSpanExt;
 
 use web2pdf_lib::{BrowserWeb2Pdf, PageWeb2Pdf};
@@ -26,7 +25,9 @@ impl Config {
     pub(super) async fn force_save_page(&self, file_path: &Path, url: &Url) -> Result<bool> {
         let mut template = "{spinner:.green} [{elapsed_precise}] Creating page: ".to_string();
         template.push_str(file_path.to_str().unwrap_or("Unknown Filename"));
-        Span::current().pb_set_style(&ProgressStyle::default_spinner().template(&template)?);
+        Span::current().pb_set_style(
+            &tracing_indicatif::style::ProgressStyle::default_spinner().template(&template)?,
+        );
 
         // Make sure path exists
         ensure_path_exists(&file_path).await?;

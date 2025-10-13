@@ -1,4 +1,4 @@
-use reqwest::{cookie::Jar, Client};
+use reqwest::{Client, cookie::Jar};
 use serde_json::Value;
 use tracing::{debug, trace};
 

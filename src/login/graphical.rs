@@ -3,8 +3,8 @@ use std::path::Path;
 use tracing::{debug, trace};
 
 use chromiumoxide::{
-    browser::{self, Browser},
     BrowserConfig,
+    browser::{self, Browser},
 };
 use tokio_stream::StreamExt;
 

@@ -26,7 +26,9 @@ pub struct Lti {
 impl Download for Lti {
     async fn download(&self, config: Arc<Config>, path: &Path) -> Result<()> {
         // Check if we have an rwth-opencast video (only rwth opencast has an opencast icon)
-        if self.modicon == "https://moodle.rwth-aachen.de/theme/image.php/boost_union_rwth/theme_boost_union_rwth/-1/opencast_episode?filtericon=1" {
+        if self.modicon
+            == "https://moodle.rwth-aachen.de/theme/image.php/boost_union_rwth/theme_boost_union_rwth/-1/opencast_episode?filtericon=1"
+        {
             // We can use the publically available m3u8
             // https://streaming.rwth-aachen.de/rwth_production/_definst_/smil:prod/smil:engage-player_{video_identifier}_presentation.smil/playlist.m3u8
             let re = &RE_VIDEO_IDENTIFIER;
@@ -40,7 +42,7 @@ impl Download for Lti {
                     } else {
                         None
                     }
-                },
+                }
                 None => None,
             };
             let vid_id = match vid_id {
@@ -52,17 +54,17 @@ impl Download for Lti {
                         Some(cookie) => cookie,
                         None => {
                             config.status_bar.register_skipped().await;
-                            return  Ok(());
-                        },
+                            return Ok(());
+                        }
                     };
-                    let url = format!("https://moodle.rwth-aachen.de/mod/lti/launch.php?id={}&triggerview=0", &self.id);
+                    let url = format!(
+                        "https://moodle.rwth-aachen.de/mod/lti/launch.php?id={}&triggerview=0",
+                        &self.id
+                    );
                     let response = config
                         .client
                         .get(url)
-                        .header(
-                            "Cookie",
-                            "MoodleSession=".to_string() + &cookie,
-                        )
+                        .header("Cookie", "MoodleSession=".to_string() + &cookie)
                         .send()
                         .await?;
 
@@ -73,16 +75,23 @@ impl Download for Lti {
                         .find(Attr("name", "custom_id"))
                         .filter_map(|node| node.attr("value"))
                         .next()
-                        .ok_or_else(|| anyhow!("custom_id not found in the HTML"))?.to_string()
-                },
+                        .ok_or_else(|| anyhow!("custom_id not found in the HTML"))?
+                        .to_string()
+                }
             };
 
             trace!("Opencast Video id: {:?}", vid_id);
 
-            let url = Url::from_str(&format!("https://streaming.rwth-aachen.de/rwth_production/_definst_/smil:prod/smil:engage-player_{}_presentation.smil/playlist.m3u8", vid_id))?;
+            let url = Url::from_str(&format!(
+                "https://streaming.rwth-aachen.de/rwth_production/_definst_/smil:prod/smil:engage-player_{}_presentation.smil/playlist.m3u8",
+                vid_id
+            ))?;
             let file_path = path.join(&self.name).with_extension("mp4");
 
-            config.queue_youtube_video(url, OutputType::File(file_path)).await.context("Failed Opencast")?;
+            config
+                .queue_youtube_video(url, OutputType::File(file_path))
+                .await
+                .context("Failed Opencast")?;
         }
 
         Ok(())

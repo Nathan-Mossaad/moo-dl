@@ -15,9 +15,9 @@ use url::Url;
 
 use web2pdf_lib::Browser;
 
+use crate::Result;
 use crate::download::youtube::YoutubeVideo;
 use crate::status_bar::StatusBar;
-use crate::Result;
 
 pub fn read_config<P: AsRef<Path>>(path: P) -> Result<Config> {
     let contents = fs::read_to_string(path).with_context(|| "Failed to read config file")?;

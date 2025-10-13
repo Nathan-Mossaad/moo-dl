@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use tokio_stream::{wrappers::ReadDirStream, StreamExt};
+use tokio_stream::{StreamExt, wrappers::ReadDirStream};
 use url::Url;
 
 use crate::download::youtube::OutputType;

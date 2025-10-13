@@ -1,12 +1,11 @@
 use std::process::Stdio;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use serde_json::Value;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 
-use indicatif::ProgressStyle;
-use tracing::{debug, instrument, trace, Span};
+use tracing::{Span, debug, instrument, trace};
 use tracing_indicatif::span_ext::IndicatifSpanExt;
 
 use super::*;
@@ -63,7 +62,7 @@ impl Youtube {
         }
 
         Span::current().pb_set_style(
-            &ProgressStyle::default_bar()
+            &tracing_indicatif::style::ProgressStyle::default_bar()
                 .template(&template)?
                 .progress_chars("#>-"),
         );

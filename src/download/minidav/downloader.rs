@@ -1,9 +1,9 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use chrono::{DateTime, FixedOffset};
 use futures::future::join_all;
 use once_cell::sync::Lazy;
 use reqwest::header::CONTENT_DISPOSITION;
-use serde::{de, Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, de};
 use tracing::{debug, trace};
 use url::Url;
 

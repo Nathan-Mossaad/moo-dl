@@ -6,10 +6,10 @@ use std::result::Result::Ok;
 use std::sync::Arc;
 use std::time::Duration;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use regex::Regex;
-use reqwest::cookie::CookieStore;
 use reqwest::Response;
+use reqwest::cookie::CookieStore;
 use rwth::from_rwth;
 use tokio::time::sleep;
 use tracing::{debug, info, trace, warn};
@@ -18,8 +18,8 @@ use url::Url;
 use select::{document::Document, predicate::Name};
 use user_pass::from_username_password;
 
-use crate::config::sync_config::{Config, Login, LoginState};
 use crate::Result;
+use crate::config::sync_config::{Config, Login, LoginState};
 
 pub struct LoginParams {
     pub cookie: String,

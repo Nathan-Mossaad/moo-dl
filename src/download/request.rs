@@ -1,19 +1,18 @@
 use std::path::Path;
 
 use anyhow::anyhow;
-use indicatif::ProgressStyle;
 use reqwest::RequestBuilder;
 use tokio::{fs, fs::File, io::AsyncWriteExt};
 use tokio_stream::StreamExt;
-use tracing::{instrument, Span};
+use tracing::{Span, instrument};
 use tracing_indicatif::span_ext::IndicatifSpanExt;
 
 use super::*;
 
 use crate::{
-    config::sync_config::{Config, UpdateStrategy},
-    update::{timestamp::set_file_creation, UpdateState},
     Result,
+    config::sync_config::{Config, UpdateStrategy},
+    update::{UpdateState, timestamp::set_file_creation},
 };
 
 /// Downloads a file from the specified URL asynchronously with a progress bar.
@@ -50,7 +49,7 @@ async fn force_download_file(
             .unwrap_or("Unknown Filename");
         template.push_str(filename);
         Span::current().pb_set_style(
-            &ProgressStyle::default_bar()
+            &tracing_indicatif::style::ProgressStyle::default_bar()
                 .template(&template)?
                 .progress_chars("#>-"),
         );
@@ -62,7 +61,9 @@ async fn force_download_file(
             .and_then(|name| name.to_str())
             .unwrap_or("Unknown Filename");
         template.push_str(filename);
-        Span::current().pb_set_style(&ProgressStyle::default_spinner().template(&template)?);
+        Span::current().pb_set_style(
+            &tracing_indicatif::style::ProgressStyle::default_spinner().template(&template)?,
+        );
     }
     Span::current().pb_set_position(0);
     let mut downloaded: u64 = 0;

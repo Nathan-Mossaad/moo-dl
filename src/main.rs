@@ -18,7 +18,7 @@ use tracing_subscriber::{
 pub use anyhow::Result;
 
 use config::cli;
-use config::sync_config::{read_config, Config};
+use config::sync_config::{Config, read_config};
 use generate_config::generate_config;
 
 #[tokio::main]

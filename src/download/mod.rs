@@ -8,7 +8,7 @@ use std::path::Path;
 
 use tokio::fs;
 
-use crate::{config::sync_config::Config, Result};
+use crate::{Result, config::sync_config::Config};
 
 /// Ensures that the directory specified by the given `Path` exists.
 async fn ensure_path_exists(path: &Path) -> Result<()> {
