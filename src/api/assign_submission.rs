@@ -79,19 +79,18 @@ impl Download for Submission {
 // feedback
 #[derive(Deserialize, Debug)]
 pub(super) struct Feedback {
-    plugins: Vec<Plugin>,
+    plugins: Option<Vec<Plugin>>,
 }
 impl Download for Feedback {
     async fn download(&self, config: Arc<Config>, path: &Path) -> Result<()> {
-        let path = &path.join("feedback");
-        // Create a task for each content
-        let tasks = self
-            .plugins
-            .iter()
-            .map(|r| r.download(config.clone(), &path));
-        // Return an error if one occured
-        for res in join_all(tasks).await {
-            res.context("Failed Resource")?;
+        if let Some(plugins) = &self.plugins {
+            let path = &path.join("feedback");
+            // Create a task for each content
+            let tasks = plugins.iter().map(|r| r.download(config.clone(), &path));
+            // Return an error if one occured
+            for res in join_all(tasks).await {
+                res.context("Failed Resource")?;
+            }
         }
         Ok(())
     }
