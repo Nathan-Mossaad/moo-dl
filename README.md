@@ -13,9 +13,6 @@ A next generation moodle sync client with a focus on speed and function.
 
 ## Setup
 
-> **Warning:** Current versions of chromium are not compatible (yet) make sure to run an older chromium version like: [brave v1.70.177](https://github.com/brave/brave-browser/releases/tag/v1.70.117)\
-Please set the path to brave in the config
-
 ### Dependencies
 
 - A chromium based browser (A specific one may be set in the config)
@@ -41,13 +38,13 @@ Run: `moo-dl sync`
 
 ### Login methods
 
-|                                                                 |     Full login    |
-| --------------------------------------------------------------- | :----------------: |
-| wstoken only                                                    |         ❌         |
-| Username and Password                                           |         ✔️         |
-| Graphical (A browser window will pop and allows for logging in) |         ✔️         |
-| RWTH (specific to the RWTH-Aachen university)                   |         ✔️         |
-| Raw (Only intended for Development)                             |         ✔️         |
+|                                                                 | Full login |
+| --------------------------------------------------------------- | :--------: |
+| wstoken only                                                    |     ❌     |
+| Username and Password                                           |     ✔️     |
+| Graphical (A browser window will pop and allows for logging in) |     ✔️     |
+| RWTH (specific to the RWTH-Aachen university)                   |     ✔️     |
+| Raw (Only intended for Development)                             |     ✔️     |
 
 ### Syncing capabilities
 
