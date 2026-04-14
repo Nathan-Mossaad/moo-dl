@@ -2,10 +2,7 @@ use std::path::Path;
 
 use tracing::{debug, trace};
 
-use chromiumoxide::{
-    BrowserConfig,
-    browser::{self, Browser},
-};
+use chromiumoxide::{BrowserConfig, browser::Browser};
 use tokio_stream::StreamExt;
 
 use super::*;
@@ -25,7 +22,7 @@ pub async fn login_graphical(
     }
 
     // Setup browser config
-    let mut browser_config = BrowserConfig::builder().headless_mode(browser::HeadlessMode::False);
+    let mut browser_config = BrowserConfig::builder().with_head();
     if let Some(path) = executable_path {
         browser_config = browser_config.chrome_executable(path);
     }
