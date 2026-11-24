@@ -145,6 +145,7 @@ pub enum Module {
     Forum,
     Hsuforum,
     Grouptool,
+    Scorm,
 }
 
 // Update strategy

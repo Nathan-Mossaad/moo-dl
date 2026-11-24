@@ -112,6 +112,7 @@ fn config_module_of(m: &Module) -> Option<ConfigModule> {
         Module::Vpl(_) => Some(ConfigModule::Vpl),
         Module::Lti(_) => Some(ConfigModule::Lti),
         Module::Grouptool(_) => Some(ConfigModule::Grouptool),
+        Module::Scorm(_) => Some(ConfigModule::Scorm),
         Module::Unknown => None,
     }
 }

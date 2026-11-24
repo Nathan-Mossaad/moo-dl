@@ -14,6 +14,7 @@ mod page;
 mod pdfannotator;
 mod quiz;
 mod resource;
+mod scorm;
 mod vpl;
 
 // Reexport
@@ -28,6 +29,7 @@ use page::*;
 use pdfannotator::*;
 use quiz::*;
 use resource::*;
+use scorm::*;
 use vpl::*;
 
 #[derive(Debug, Deserialize)]
@@ -57,6 +59,8 @@ pub enum Module {
     Lti(Lti),
     #[serde(rename = "grouptool")]
     Grouptool(Grouptool),
+    #[serde(rename = "scorm")]
+    Scorm(Scorm),
     #[serde(other)]
     Unknown,
 }
@@ -76,6 +80,7 @@ impl Download for Module {
             Module::Assign(a) => a.download(config, path).await?,
             Module::Pdfannotator(a) => a.download(config, path).await?,
             Module::Grouptool(a) => a.download(config, path).await?,
+            Module::Scorm(a) => a.download(config, path).await?,
             Module::Unknown => {}
         }
         Ok(())

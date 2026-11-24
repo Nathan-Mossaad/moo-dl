@@ -64,6 +64,7 @@ Run: `moo-dl sync`
 | quiz (saving each attempt page)                                              | ✔️<sup>3</sup> |                                   |         ✔️          |
 | glossary (saving overview of all items as a page)                            |                |                ✔️                 |         ✔️          |
 | Grouptool (saving as PDF)                                                    |                |                ✔️                 |         ✔️          |
+| SCORM (experimental, `index.html` only)                                      |                |                                   |         ✔️          |
 
 1: Full login only required for saving additonal comments (that are not files) \
 2: Dependant on Course adminstrators \

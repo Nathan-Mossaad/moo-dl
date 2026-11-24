@@ -138,6 +138,8 @@ modules:
   # Currently Lti is equivalent to opencast (which requires youtube to be enabled)
   - Lti
   - Grouptool
+  # SCORM index.html only (requires a Moodle session)
+  - Scorm
 
 # Enables saving grades
 grades: true
